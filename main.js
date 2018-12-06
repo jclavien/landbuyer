@@ -1,4 +1,24 @@
 "use strict";
+// Déclaration des variables
+var CcyPair
+var Amount
+var TakeProfit
+var Intervall
+var NbOfOrder
+var Frequency
+var PendingOrders
+var HighTrade
+var LowTrade
+
+//Assignation des valeurs aux paramètres du modèle
+CcyPair = 'TRY_JPY' // Paire de devise sur laquelle le landbuyer est lancé
+Amount = 20 // montant de chaque position
+TakeProfit = 5 // distance en pips du take profit
+Intervall = 1 // distance en pips entre les positions 
+NbOfOrder = 50 // nombre d'ordres en dessus de la position ouverte la plus haute et en dessous de la position ouverte la plus basse
+Frequency = 30 // fréquence en seconde à laquelle le programme se connecte au compte
+
+
 
 // import
 const config = require('./lib/config')
@@ -20,6 +40,10 @@ const options = {
 // create config oanda API and create a standard connection
 const oanda = new config.Config(options)
 const connection = oanda.createContext()
+
+
+// TESTS
+ 
 
 // example code that retrieve the account infos
 connection.account.get(
@@ -71,6 +95,7 @@ connection.account.get(
       }
 
       console.log();
+	  
     }
   }
 )
