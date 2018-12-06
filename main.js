@@ -42,8 +42,24 @@ const oanda = new config.Config(options)
 const connection = oanda.createContext()
 
 
-// TESTS
- 
+// LANDBUYER - PSEUDO CODE
+// Dans la liste des ordres ouverts trouver le Take Profit (TP) le plus haut et le TP le plus bas
+// Calculer la valeur théorique de l'ordre ouvert le plus haut et le plus bas (TP le plus haut - TakeProfit) et (TP le plus bas - TakeProfit)
+HighTrade = Math.max(account.pendingOrder.TakeProfit.PriceValue - TakeProfit);
+console.log (HighTrade);
+LowTrade = Math.min(account.pendingOrder.TakeProfit.PriceValue - TakeProfit);
+console.log(LowTrade);
+// Placer des ordres au-dessus de l'ordre le plus haut et au dessous de l'ordre le plus bas
+For i = 1 to nbOfOrder
+if !OpenOrder,PriceValue = HighTrade + Intervall * i //si l'ordre n'existe pas
+PostLimitOrder (PriceValue = HighTrade + Intervall * i) //On place un ordre selon les paramètres (Amount, TakeProfit) au dessus du trade ouvert le plus haut
+// idem avec les ordres à placer sous le trade ouvert le plus bas
+For i = 1 to nbOfOrder
+if !OpenOrder,PriceValue = LowTrade - Intervall * i //si l'ordre n'existe pas
+PostLimitOrder (PriceValue = LowTrade - Intervall * i) //On place un ordre selon les paramètres (Amount, TakeProfit)
+
+// VOILA!! A réaliser toutes les 30sec...
+
 
 // example code that retrieve the account infos
 connection.account.get(
