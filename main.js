@@ -38,6 +38,7 @@ const connection = oanda.createContext()
 // à pas besoin de déclarer tout les variables au début du fichier comme en C.
 // Et c'est pas une pratique qui se fait.
 var TakeProfitList = new Array();
+var LimitOrderList = new Array();
 let round = 0
 
 // Le code qui travail vraiment. Tout ce qui n'est pas fait/à faire toutes les
@@ -75,13 +76,23 @@ let worker = setInterval(() => {
       for (let order of account.orders) {
 		  if (order.type == 'TAKE_PROFIT') { //si l'ordre est de type Take_Profit
 			TakeProfitList.push(order.price);// on le met dans notre tableau 
-				
+			
        // console.log(`Ordre: ${order.title()},Type d'ordre : ${order.type}, Prix: ${order.price}`);
 	  
       }
+	  if (order.type == 'MARKET_IF_TOUCHED') {
+		LimitOrderList.push(order.price);
+	  }
+	  
 		  }
+	
 		  TakeProfitList.sort()
+		  LimitOrderList.sort()
+		  console.log('TAKE PROFIT ORDERS');
 		    console.log(TakeProfitList);
+			console.log('----');
+		console.log('LIMIT ORDERS');
+		    console.log(LimitOrderList);
 			
       console.log('----');
       
@@ -102,8 +113,7 @@ let worker = setInterval(() => {
       console.log(`low trade: ${lowTradeValue}`)
       console.log('----')
 	 
-	 TakeProfitList = []; //On vide le tableau des take profit ouverts
-
+	
       // Ici, j'imagine que la suite de l'algorithme consiste à placer des ordres
       // comme je dis, c'est codé mais commenté parce que pas testé. Je veux que tu me
       // valide les trucs précédant avant.
@@ -111,12 +121,17 @@ let worker = setInterval(() => {
       // On place les ordres supérieurs
       for (let i = 0; i < nbOrders; i++) {
         // Ici je ne comprends pas la suite de l'aglo, "Si QUEL ordre n'existe pas?" --> REPONSE : l'ordre dont le prix = HighTrade + Intervall * i
-      }
+      
+	  }
 
       // On place les ordres inférieurs
       for (let i = 0; i < nbOrders; i++) {
         // Ici je ne comprends pas la suite de l'aglo, "Si QUEL ordre n'existe pas?" --> REPONSE : l'ordre dont le prix = LowTrade - Intervall * i
       }
+	  
+	 //Réinitialisation des tableaux
+	 TakeProfitList = []; 
+	 LimitOrderList = [];
     }
   })
 }, workerInterval)
