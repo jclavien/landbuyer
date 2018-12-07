@@ -97,12 +97,12 @@ let worker = setInterval(() => {
 
       // On place les ordres supérieurs
       for (let i = 0; i < nbOrders; i++) {
-        // Ici je ne comprends pas la suite de l'aglo, "Si QUEL ordre n'existe pas?"
+        // Ici je ne comprends pas la suite de l'aglo, "Si QUEL ordre n'existe pas?" --> REPONSE : l'ordre dont le prix = HighTrade + Intervall * i
       }
 
       // On place les ordres inférieurs
       for (let i = 0; i < nbOrders; i++) {
-        // Ici je ne comprends pas la suite de l'aglo, "Si QUEL ordre n'existe pas?"
+        // Ici je ne comprends pas la suite de l'aglo, "Si QUEL ordre n'existe pas?" --> REPONSE : l'ordre dont le prix = LowTrade - Intervall * i
       }
     }
   })
