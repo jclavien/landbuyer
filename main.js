@@ -9,10 +9,10 @@ const utils = require('./lib/utils')
 // qu'elles n'évoluent pas pendant l'évaluation du code. L'idée c'est de rendre
 // le tout facile à paramétrer en mettant toutes "configs" du code au même
 // endroit.
-const workerInterval = 30000 // 30 secondes en millisecondes
+const workerInterval = 3000 // 30 secondes en millisecondes
 const ccyPair = 'TRY_JPY' // Paire de devise sur laquelle le landbuyer est lancé
 const positionAmount = 20 // Montant de chaque position
-const distOnTakeProfit = 5 // Distance en pips du take profit
+const distOnTakeProfit = 0.05 // Distance en pips du take profit
 const distBetweenPosition = 1 // Distance en pips entre les positions 
 const nbOrders = 50 // Nombre d'ordres en dessus de la position ouverte la plus
                    // haute et en dessous de la position ouverte la plus basse
@@ -37,6 +37,7 @@ const connection = oanda.createContext()
 // Ici on pose des variables générales (donc à l'extérieur du worker). En JS on
 // à pas besoin de déclarer tout les variables au début du fichier comme en C.
 // Et c'est pas une pratique qui se fait.
+var TakeProfitList = new Array();
 let round = 0
 
 // Le code qui travail vraiment. Tout ce qui n'est pas fait/à faire toutes les
@@ -72,24 +73,36 @@ let worker = setInterval(() => {
       // Ici on affiche le titre + le prix de l'ordre, c'est pour du débug, ça permet
       // d'avoir une vue d'ensemble des tes ordres.
       for (let order of account.orders) {
-        console.log(`Ordre: ${order.title()}, Prix: ${order.price}`);
+		  if (order.type == 'TAKE_PROFIT') { //si l'ordre est de type Take_Profit
+			TakeProfitList.push(order.price);// on le met dans notre tableau 
+				
+       // console.log(`Ordre: ${order.title()},Type d'ordre : ${order.type}, Prix: ${order.price}`);
+	  
       }
+		  }
+		  TakeProfitList.sort()
+		    console.log(TakeProfitList);
+			
       console.log('----');
       
       // Ici on calcule les maximums et les minimums. Le code semble compliqué et c'est
       // normal. On peut pas faire comme tu proposait. Parce que tu demandes de faire un
       // maximum sur un objet compliqué avec un opération mathématique. Donc on doit faire
       // ce qui suit. Je pourrais t'expliqué à l'occasion.
-      let highTradeValue = Math.max.apply(Math, account.orders.map((o) => {
-        return o.price - distOnTakeProfit
-      }))
-      let lowTradeValue = Math.min.apply(Math, account.orders.map((o) => {
-        return o.price - distOnTakeProfit
-      }))
-
+     // let highTradeValue = Math.max.apply(Math, account.orders.map((o) => {
+    //   return o.price - distOnTakeProfit
+    // }))
+	let highTradeValue = Math.round((Math.max(...TakeProfitList) - distOnTakeProfit)*100)/100;	
+	
+     // let lowTradeValue = Math.min.apply(Math, account.orders.map((o) => {
+     //   return o.price - distOnTakeProfit
+     // }))
+	let lowTradeValue = Math.round((Math.min(...TakeProfitList) - distOnTakeProfit)*100)/100;	
       console.log(`high trade: ${highTradeValue}`)
       console.log(`low trade: ${lowTradeValue}`)
       console.log('----')
+	 
+	 TakeProfitList = []; //On vide le tableau des take profit ouverts
 
       // Ici, j'imagine que la suite de l'algorithme consiste à placer des ordres
       // comme je dis, c'est codé mais commenté parce que pas testé. Je veux que tu me
