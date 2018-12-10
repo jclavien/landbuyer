@@ -13,9 +13,10 @@ const workerInterval = 3000 // 30 secondes en millisecondes
 const ccyPair = 'TRY_JPY' // Paire de devise sur laquelle le landbuyer est lancé
 const positionAmount = 20 // Montant de chaque position
 const distOnTakeProfit = 0.05 // Distance en pips du take profit
-const distBetweenPosition = 1 // Distance en pips entre les positions 
-const nbOrders = 50 // Nombre d'ordres en dessus de la position ouverte la plus
+const distBetweenPosition = 5 // Distance en pips entre les positions 
+const nbOrders = 10 // Nombre d'ordres en dessus de la position ouverte la plus
                    // haute et en dessous de la position ouverte la plus basse
+const orderSide = 'buy'
 
 const options = {
   hostname: 'api-fxpractice.oanda.com',
@@ -37,9 +38,16 @@ const connection = oanda.createContext()
 // Ici on pose des variables générales (donc à l'extérieur du worker). En JS on
 // à pas besoin de déclarer tout les variables au début du fichier comme en C.
 // Et c'est pas une pratique qui se fait.
+
 var TakeProfitList = new Array();
 var LimitOrderList = new Array();
+var OrderToBePlaced = new Array();
+var SearchedOrder = 0;
 let round = 0
+
+
+// ---------->   WORKER     <-------------------------------------------------------------------------------
+
 
 // Le code qui travail vraiment. Tout ce qui n'est pas fait/à faire toutes les
 // X secondes sera mis dehors, avant ou après.
@@ -61,77 +69,86 @@ let worker = setInterval(() => {
     // Les infos du comptes sont stockées dans cette variable
     let account = response.body.account
 
-    // On test si il y a des pendingOrders, si non, on ne fait rien
+    // On test si il y a des pendingOrders, 
     if (account.pendingOrderCount > 0) {
-      // Ici c'est un peu compliqué parce que la doc est pas hyper clair sur ce
-      // que représentent ces objets, et ils contiennent une volée et demi de
-      // valeurs. Donc il va falloir aller à tâtons et regarder ce qu'il te semble
-      // juste.
-      // J'ai codé la suite qui permet de calculer tes "highTradeValue"/... mais la
-      // suite et juste un pseudo code pour voir si ça te semble correct.
-
-      // On parcours tous les orders
-      // Ici on affiche le titre + le prix de l'ordre, c'est pour du débug, ça permet
-      // d'avoir une vue d'ensemble des tes ordres.
+      // On rempli un tableau nommée TakeProfitList et un autre nommé LimitOrderList qui contient le price de ces ordres ouverts
       for (let order of account.orders) {
 		  if (order.type == 'TAKE_PROFIT') { //si l'ordre est de type Take_Profit
 			TakeProfitList.push(order.price);// on le met dans notre tableau 
-			
-       // console.log(`Ordre: ${order.title()},Type d'ordre : ${order.type}, Prix: ${order.price}`);
-	  
       }
 	  if (order.type == 'MARKET_IF_TOUCHED') {
 		LimitOrderList.push(order.price);
 	  }
-	  
-		  }
-	
+										}
+	// On trie nos tableau dans l'ordre croissant
 		  TakeProfitList.sort()
 		  LimitOrderList.sort()
-		  console.log('TAKE PROFIT ORDERS');
+	// On affiche nos tableaux
+			console.log('TAKE PROFIT ORDERS');
 		    console.log(TakeProfitList);
 			console.log('----');
-		console.log('LIMIT ORDERS');
+			console.log('LIMIT ORDERS');
 		    console.log(LimitOrderList);
-			
-      console.log('----');
+			console.log('----');
       
-      // Ici on calcule les maximums et les minimums. Le code semble compliqué et c'est
-      // normal. On peut pas faire comme tu proposait. Parce que tu demandes de faire un
-      // maximum sur un objet compliqué avec un opération mathématique. Donc on doit faire
-      // ce qui suit. Je pourrais t'expliqué à l'occasion.
-     // let highTradeValue = Math.max.apply(Math, account.orders.map((o) => {
-    //   return o.price - distOnTakeProfit
-    // }))
+// On renseigne la variable highTradeValue qui est le niveau de prix de la position ouverte la plus haute. Ce prix est calculé par rapport au take profit le plus haut.
 	let highTradeValue = Math.round((Math.max(...TakeProfitList) - distOnTakeProfit)*100)/100;	
-	
-     // let lowTradeValue = Math.min.apply(Math, account.orders.map((o) => {
-     //   return o.price - distOnTakeProfit
-     // }))
+// Idem pour le trade ouvert le plus bas 
 	let lowTradeValue = Math.round((Math.min(...TakeProfitList) - distOnTakeProfit)*100)/100;	
+
+// On affiche les deux valeurs ainsi calculées
       console.log(`high trade: ${highTradeValue}`)
       console.log(`low trade: ${lowTradeValue}`)
       console.log('----')
 	 
-	
-      // Ici, j'imagine que la suite de l'algorithme consiste à placer des ordres
-      // comme je dis, c'est codé mais commenté parce que pas testé. Je veux que tu me
-      // valide les trucs précédant avant.
-
-      // On place les ordres supérieurs
-      for (let i = 0; i < nbOrders; i++) {
-        // Ici je ne comprends pas la suite de l'aglo, "Si QUEL ordre n'existe pas?" --> REPONSE : l'ordre dont le prix = HighTrade + Intervall * i
-      
+// On rempli un tableau avec les niveau de prix des ordres que l'on devrait ouvrir
+      for (let i = 1; i < nbOrders; i++) { 
+		   var SearchedOrder= Math.round((i*distBetweenPosition/100+highTradeValue)*100)/100; // le *100/100 est pour arrondir à 2 chiffres après la virgule
+		   if (LimitOrderList.includes(SearchedOrder) == false){ //si notre tableau LimitOrderList ne contient pas encore l'ordre recherché
+		   OrderToBePlaced.push(SearchedOrder); // alors on l'ajoute au tableau OrderToBePlaced
+		   } // J'ai ici un probleme ici puisque le programme pousse tous les ordres recherchés dans le tableau, meme si ca existe deja dans le tableau LimitOrder	   
 	  }
 
-      // On place les ordres inférieurs
-      for (let i = 0; i < nbOrders; i++) {
-        // Ici je ne comprends pas la suite de l'aglo, "Si QUEL ordre n'existe pas?" --> REPONSE : l'ordre dont le prix = LowTrade - Intervall * i
+      // Idem pour les ordres inférieurs
+      for (let i = 1; i < nbOrders; i++) {
+		  var SearchedOrder= Math.round((lowTradeValue-i*distBetweenPosition/100)*100)/100;
+		   if (LimitOrderList.includes(SearchedOrder) == false){
+		   OrderToBePlaced.push(SearchedOrder);
+		   }
+       
       }
+	   console.log('ORDERS TO BE PLACED')
+	  console.log(OrderToBePlaced)
+	  console.log('----');
 	  
+	// Une fois le tableau des OrderToBePlaced rempli on place les ordres avec comme paramètre les prix ainsi obtenus, le montant (const) et le takeprofit (const)
+	 
+// J'ai trouvé ca online : 
+/**
+* @method createOrder
+* @param {String} accountId Required.
+* @param {Object} order
+* @param {String} order.instrument Required. Instrument to open the order on.
+* @param {Number} order.units Required. The number of units to open order for.
+* @param {String} order.side Required. Direction of the order, either ‘buy’ or ‘sell’.
+* @param {String} order.type Required. The type of the order ‘limit’, ‘stop’, ‘marketIfTouched’ or ‘market’.
+* @param {String} order.expiry Required. If order type is ‘limit’, ‘stop’, or ‘marketIfTouched’. The value specified must be in a valid datetime format.
+* @param {String} order.price Required. If order type is ‘limit’, ‘stop’, or ‘marketIfTouched’. The price where the order is set to trigger at.
+* @param {Number} order.lowerBound Optional. The minimum execution price.
+* @param {Number} order.upperBound Optional. The maximum execution price.
+* @param {Number} order.stopLoss Optional. The stop loss price.
+* @param {Number} order.takeProfit Optional. The take profit price.
+* @param {Number} order.trailingStop Optional The trailing stop distance in pips, up to one decimal place.
+* @param {Function} callback
+*/
+//	create.order(AccoundID: le token le numero de compte?,  ccyPair, positionAmount, buy, orderSide, MARKET_IF_TOUCHED, GTC, Le prix du OrderToBePlaced, vide, vide, vide,
+//			Le prix du OrderToBePlaced + distOnTakeProfit, vide, Callback : c'est quoi?) 
+	
+	
 	 //Réinitialisation des tableaux
 	 TakeProfitList = []; 
 	 LimitOrderList = [];
+	 OrderToBePlaced = [];
     }
   })
 }, workerInterval)
