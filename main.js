@@ -13,7 +13,7 @@ const workerInterval = 3000 // 30 secondes en millisecondes
 const ccyPair = 'TRY_JPY' // Paire de devise sur laquelle le landbuyer est lancé
 const positionAmount = 20 // Montant de chaque position
 const distOnTakeProfit = 0.05 // Distance en pips du take profit
-const distBetweenPosition = 5 // Distance en pips entre les positions 
+const distBetweenPosition = 1 // Distance en pips entre les positions 
 const nbOrders = 10 // Nombre d'ordres en dessus de la position ouverte la plus
                    // haute et en dessous de la position ouverte la plus basse
 const orderSide = 'buy'
@@ -74,10 +74,10 @@ let worker = setInterval(() => {
       // On rempli un tableau nommée TakeProfitList et un autre nommé LimitOrderList qui contient le price de ces ordres ouverts
       for (let order of account.orders) {
 		  if (order.type == 'TAKE_PROFIT') { //si l'ordre est de type Take_Profit
-			TakeProfitList.push(order.price);// on le met dans notre tableau 
+			TakeProfitList.push(Math.round((order.price)*100)/100);// on le met dans notre tableau 
       }
 	  if (order.type == 'MARKET_IF_TOUCHED') {
-		LimitOrderList.push(order.price);
+		LimitOrderList.push(Math.round((order.price)*100)/100);
 	  }
 										}
 	// On trie nos tableau dans l'ordre croissant
@@ -145,6 +145,7 @@ let worker = setInterval(() => {
 //			Le prix du OrderToBePlaced + distOnTakeProfit, vide, Callback : c'est quoi?) 
 	
 	
+		
 	 //Réinitialisation des tableaux
 	 TakeProfitList = []; 
 	 LimitOrderList = [];
