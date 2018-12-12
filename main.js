@@ -156,8 +156,17 @@ let worker = setInterval(() => {
       * @param {Number} order.trailingStop Optional The trailing stop distance in pips, up to one decimal place.
       * @param {Function} callback
       */
-      // create.order(AccoundID: le token le numero de compte?,  ccyPair, positionAmount, buy, orderSide, MARKET_IF_TOUCHED, GTC, Le prix du orderToBePlacedList, vide, vide, vide,
-      // Le prix du orderToBePlacedList + distOnTakeProfit, vide, Callback : c'est quoi?) 
+      /** 
+      LimitOrderRequest.post {
+		  type : (LIMIT),
+		  intrument : (ccyPair),
+		  units : (positionAmount),
+		  price : (orderToBePlacedList),
+		  takeProfitOnFill : (TakeProfitDetails {
+			  price : (orderToBePlacedList + distOnTakeProfit)
+		  }
+	  }*/
+    
     }
   })
 }, workerInterval)
