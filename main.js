@@ -45,7 +45,7 @@ function round(number) {
 }
 
 
-// ---------->   WORKER     <-------------------------------------------------------------------------------
+// ---------->   WORKER     <--------------------------------------------------
 
 
 // Le code qui travail vraiment. Tout ce qui n'est pas fait/à faire toutes les
@@ -70,9 +70,9 @@ let worker = setInterval(() => {
   //    qui écrivent "var", c'est parce que c'est vieux.
   // 3. La convention, en javascript, c'est de faire des variables en camelCase
   //    (donc sans majuscule au début).
-  let takeProfitList = new Array();
-  let limitOrderList = new Array();
-  let orderToBePlacedList = new Array();
+  let takeProfitOrders = new Array();
+  let limitOrders = new Array();
+  let ordersToBePlaced = new Array();
   let searchedOrder = 0;
 
   // On récupère les infos du compte
@@ -82,112 +82,98 @@ let worker = setInterval(() => {
     // Les infos du comptes sont stockées dans cette variable
     let account = response.body.account
 
+    /*console.log('PENDING ACCOUNTS')
+    for (let order of account.orders) {
+      console.log(`Ordre: ${order.title()}, Prix: ${order.price}`)
+    }*/
+
     // On test si il y a des pendingOrders, 
     if (account.pendingOrderCount > 0) {
-      // On rempli un tableau nommée takeProfitList et un autre nommé limitOrderList qui contient le price de ces ordres ouverts
+      // On rempli un tableau nommée takeProfitOrders et un autre nommé limitOrders
+      // qui contient le price de ces ordres ouverts
       for (let order of account.orders) {
-        if (order.type == 'TAKE_PROFIT') { //si l'ordre est de type Take_Profit
-          takeProfitList.push(round(order.price)) // on le met dans notre tableau 
+        if (order.type == 'TAKE_PROFIT') {
+          takeProfitOrders.push(round(order.price))
         } else if (order.type == 'MARKET_IF_TOUCHED') {
-          limitOrderList.push(round(order.price))
+          limitOrders.push(round(order.price))
         }
       }
       
       // On trie nos tableau dans l'ordre croissant
-      takeProfitList.sort()
-      limitOrderList.sort()
+      takeProfitOrders.sort()
+      limitOrders.sort()
       
       // On affiche nos tableaux
-      console.log('TAKE PROFIT ORDERS');
-      console.log(takeProfitList);
-      console.log('----');
-      console.log('LIMIT ORDERS');
-      console.log(limitOrderList);
-      console.log('----');
+      // console.log('TAKE PROFIT ORDERS');
+      // console.log(takeProfitOrders);
+      // console.log('----');
+      // console.log('LIMIT ORDERS');
+      // console.log(limitOrders);
+      // console.log('----');
       
-      // On renseigne la variable highTradeValue qui est le niveau de prix de la position ouverte la plus haute. Ce prix est calculé par rapport au take profit le plus haut.
-      let highTradeValue = round(Math.max(...takeProfitList) - distOnTakeProfit)
+      // On renseigne la variable highTradeValue qui est le niveau de prix de la position
+      // ouverte la plus haute. Ce prix est calculé par rapport au take profit le plus
+      // haut.
+      let highTradeValue = round(Math.max(...takeProfitOrders) - distOnTakeProfit)
       // Idem pour le trade ouvert le plus bas 
-      let lowTradeValue = round(Math.min(...takeProfitList) - distOnTakeProfit)
+      let lowTradeValue = round(Math.min(...takeProfitOrders) - distOnTakeProfit)
 
       // On affiche les deux valeurs ainsi calculées
-      console.log(`high trade: ${highTradeValue}`)
-      console.log(`low trade: ${lowTradeValue}`)
-      console.log('----')
+      // console.log(`high trade: ${highTradeValue}`)
+      // console.log(`low trade: ${lowTradeValue}`)
+      // console.log('----')
    
       // On rempli un tableau avec les niveau de prix des ordres que l'on devrait ouvrir
       for (let i = 1; i < nbOrders; i++) { 
-        searchedOrder= round(i * distBetweenPosition / 100 + highTradeValue)
-        
-        if (limitOrderList.includes(searchedOrder) == false){ // si notre tableau limitOrderList ne contient pas encore l'ordre recherché
-          orderToBePlacedList.push(searchedOrder) // alors on l'ajoute au tableau orderToBePlacedList
-        } // J'ai ici un probleme ici puisque le programme pousse tous les ordres recherchés dans le tableau, meme si ca existe deja dans le tableau LimitOrder     
+        searchedOrder = round(i * distBetweenPosition / 100 + highTradeValue)
+
+        // si notre tableau limitOrders ne contient pas encore l'ordre recherché
+        // Ici je t'ai fait une petite modification. Dans un if, tu n'as jamais besoin
+        // de faire x == false ou x == true. Include renvoie déjà soit True, soit False
+        // et une sequence if, requière un Bolean. Le ! devant, inverse la valeur, il
+        // correspond à un "not" logique. On peut donc lire tout ça comme suite:
+        // IF "searchedOrder" IS NOT INCLUDES IN "limitOrders" DO ...
+        if (!limitOrders.includes(searchedOrder)) {
+          // alors on l'ajoute au tableau ordersToBePlaced
+          ordersToBePlaced.push(searchedOrder)
+        }
       }
+
+      // J'ai ici un probleme ici puisque le programme pousse tous les ordres recherchés
+      // dans le tableau, meme si ca existe deja dans le tableau LimitOrder
+      // REPONSE: vérifie que c'est le bon tableau avec lequel tu compares
 
       // Idem pour les ordres inférieurs
       for (let i = 1; i < nbOrders; i++) {
         searchedOrder= round(lowTradeValue - i * distBetweenPosition / 100)
 
-        if (limitOrderList.includes(searchedOrder) == false){
-          orderToBePlacedList.push(searchedOrder);
+        if (!limitOrders.includes(searchedOrder)) {
+          ordersToBePlaced.push(searchedOrder)
         }
       }
       
-      console.log('ORDERS TO BE PLACED')
-      console.log(orderToBePlacedList)
-      console.log('----')
+      // console.log('ORDERS TO BE PLACED')
+      // console.log(ordersToBePlaced)
+      // console.log('----')
 
-      // Une fois le tableau des orderToBePlacedList rempli on place les ordres avec comme paramètre les prix ainsi obtenus, le montant (const) et le takeprofit (const)
-      // J'ai trouvé ca online : 
-      /**
-      * @method createOrder
-      * @param {String} accountId Required.
-      * @param {Object} order
-      * @param {String} order.instrument Required. Instrument to open the order on.
-      * @param {Number} order.units Required. The number of units to open order for.
-      * @param {String} order.side Required. Direction of the order, either ‘buy’ or ‘sell’.
-      * @param {String} order.type Required. The type of the order ‘limit’, ‘stop’, ‘marketIfTouched’ or ‘market’.
-      * @param {String} order.expiry Required. If order type is ‘limit’, ‘stop’, or ‘marketIfTouched’. The value specified must be in a valid datetime format.
-      * @param {String} order.price Required. If order type is ‘limit’, ‘stop’, or ‘marketIfTouched’. The price where the order is set to trigger at.
-      * @param {Number} order.lowerBound Optional. The minimum execution price.
-      * @param {Number} order.upperBound Optional. The maximum execution price.
-      * @param {Number} order.stopLoss Optional. The stop loss price.
-      * @param {Number} order.takeProfit Optional. The take profit price.
-      * @param {Number} order.trailingStop Optional The trailing stop distance in pips, up to one decimal place.
-      * @param {Function} callback
-      */
-      /** 
-      LimitOrderRequest.post {
-		  type : (LIMIT),
-		  intrument : (ccyPair),
-		  units : (positionAmount),
-		  price : (orderToBePlacedList),
-		  takeProfitOnFill : (TakeProfitDetails {
-			  price : (orderToBePlacedList + distOnTakeProfit)
-		  }
-	  }*/
-    
+      for (let i in ordersToBePlaced) {
+        // Ici on créer un objet de type LimitOrderRequest, avec différentes propriétés
+        let order = new connection.order.LimitOrderRequest({
+          instrument: ccyPair,
+          units: positionAmount,
+          price: ordersToBePlaced[i].toString()
+        })
+
+        // Ici on lance réellement la requête
+        connection.order.limit(
+          options.activeAccount,
+          order,
+          response => {
+            utils.handleErrorResponse(response)
+            console.log(`Order ${(i + 1)} created, value: ${ordersToBePlaced[i].toString()}`)
+          }
+        )
+      }
     }
   })
 }, workerInterval)
-
-/*
-TON PSEUDO CODE
-
-// LANDBUYER - PSEUDO CODE
-// Dans la liste des ordres ouverts trouver le Take Profit (TP) le plus haut et le TP le plus bas
-// Calculer la valeur théorique de l'ordre ouvert le plus haut et le plus bas (TP le plus haut - TakeProfit) et (TP le plus bas - TakeProfit)
-let HighTrade = Math.max(account.pendingOrder.TakeProfit.PriceValue - TakeProfit);
-console.log (HighTrade);
-let LowTrade = Math.min(account.pendingOrder.TakeProfit.PriceValue - TakeProfit);
-console.log(LowTrade);
-
-// Placer des ordres au-dessus de l'ordre le plus haut et au dessous de l'ordre le plus bas
-For i = 1 to nbOfOrder
-if !OpenOrder,PriceValue = HighTrade + Intervall * i //si l'ordre n'existe pas
-PostLimitOrder (PriceValue = HighTrade + Intervall * i) //On place un ordre selon les paramètres (Amount, TakeProfit) au dessus du trade ouvert le plus haut
-// idem avec les ordres à placer sous le trade ouvert le plus bas
-For i = 1 to nbOfOrder
-if !OpenOrder,PriceValue = LowTrade - Intervall * i //si l'ordre n'existe pas
-PostLimitOrder (PriceValue = LowTrade - Intervall * i) //On place un ordre selon les paramètres (Amount, TakeProfit)
-*/
