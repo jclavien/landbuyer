@@ -14,7 +14,7 @@ const ccyPair = 'TRY_JPY' // Paire de devise sur laquelle le landbuyer est lanc�
 const positionAmount = 20 // Montant de chaque position
 const distOnTakeProfit = 0.05 // Distance en pips du take profit
 const distBetweenPosition = 1 // Distance en pips entre les positions 
-const nbOrders = 10 // Nombre d'ordres en dessus de la position ouverte la plus
+const nbOrders = 3 // Nombre d'ordres en dessus de la position ouverte la plus
                    // haute et en dessous de la position ouverte la plus basse
 const orderSide = 'buy'
 
@@ -139,11 +139,7 @@ let worker = setInterval(() => {
         }
       }
 
-      // J'ai ici un probleme ici puisque le programme pousse tous les ordres recherchés
-      // dans le tableau, meme si ca existe deja dans le tableau LimitOrder
-      // REPONSE: vérifie que c'est le bon tableau avec lequel tu compares
-
-      // Idem pour les ordres inférieurs
+       // Idem pour les ordres inférieurs
       for (let i = 1; i < nbOrders; i++) {
         searchedOrder= round(lowTradeValue - i * distBetweenPosition / 100)
 
@@ -155,13 +151,25 @@ let worker = setInterval(() => {
       // console.log('ORDERS TO BE PLACED')
       // console.log(ordersToBePlaced)
       // console.log('----')
+	 // type : (LIMIT),
+		//  intrument : (ccyPair),
+		  //units : (positionAmount),
+		  //price : (orderToBePlacedList),
+		  //takeProfitOnFill : (TakeProfitDetails {
+			//  price : (orderToBePlacedList + distOnTakeProfit)
+		 // }
 
       for (let i in ordersToBePlaced) {
         // Ici on créer un objet de type LimitOrderRequest, avec différentes propriétés
-        let order = new connection.order.LimitOrderRequest({
+        let order = new connection.order.MarketIfTouchedOrderRequest ({
           instrument: ccyPair,
+		  type : 'MARKET_IF_TOUCHED',
           units: positionAmount,
-          price: ordersToBePlaced[i].toString()
+          price: ordersToBePlaced[i].toString(),
+		  //takeProfitOnFill : {
+		//		price : ordersToBePlaced[i].toString() + distOnTakeProfit,
+		//  }
+		  
         })
 
         // Ici on lance réellement la requête
