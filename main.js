@@ -130,6 +130,11 @@ let worker = setInterval(() => {
         searchedOrder = round(i * distBetweenPosition / 100 + highTradeValue)
 
         // si notre tableau limitOrders ne contient pas encore l'ordre recherché
+        // Ici je t'ai fait une petite modification. Dans un if, tu n'as jamais besoin
+        // de faire x == false ou x == true. Include renvoie déjà soit True, soit False
+        // et une sequence if, requière un Bolean. Le ! devant, inverse la valeur, il
+        // correspond à un "not" logique. On peut donc lire tout ça comme suite:
+        // IF "searchedOrder" IS NOT INCLUDES IN "limitOrders" DO ...
         if (!limitOrders.includes(searchedOrder)) {
           // alors on l'ajoute au tableau ordersToBePlaced
           ordersToBePlaced.push(searchedOrder)
@@ -155,10 +160,15 @@ let worker = setInterval(() => {
 	 console.log('TAKE PROFIT TO BE PLACED')
      console.log(takeProfitToBePlaced)
      console.log('----')
-	 /}
+	 // type : (LIMIT),
+		//  intrument : (ccyPair),
+		  //units : (positionAmount),
+		  //price : (orderToBePlacedList),
+		  //takeProfitOnFill : (TakeProfitDetails {
+			//  price : (orderToBePlacedList + distOnTakeProfit)
+		 // }
 
       for (let i in ordersToBePlaced) {
-		  let timer = setInterval(() => {
         // Ici on créer un objet de type LimitOrderRequest, avec différentes propriétés
         let order = new connection.order.MarketIfTouchedOrderRequest ({
           instrument: ccyPair,
@@ -169,18 +179,18 @@ let worker = setInterval(() => {
 		  takeProfitOnFill : {
 			  timeInForce : 'GTC',
 			  price : (ordersToBePlaced[i] + distOnTakeProfit)
-				} ,
-		
-			orderInterval)
+				} 
+				
         })
-		  connection.order.marketIfTouched(
+		
+	 
+        // Ici on lance réellement la requête
+        connection.order.marketIfTouched(
 		  options.activeAccount,
           order,
           response => {
             utils.handleErrorResponse(response)
-            console.log(`Order ${(i + 1)} created, value: ${ordersToBePlaced[i].toString()}`),
-	 
-     
+            console.log(`Order ${(i + 1)} created, value: ${ordersToBePlaced[i].toString()}`)
 			
           }
         )
