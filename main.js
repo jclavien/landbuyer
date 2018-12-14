@@ -14,7 +14,7 @@ const ccyPair = 'TRY_JPY' // Paire de devise sur laquelle le landbuyer est lanc�
 const positionAmount = 20 // Montant de chaque position
 const distOnTakeProfit = 0.05 // Distance en pips du take profit
 const distBetweenPosition = 1 // Distance en pips entre les positions 
-const nbOrders = 3 // Nombre d'ordres en dessus de la position ouverte la plus
+const nbOrders = 10 // Nombre d'ordres en dessus de la position ouverte la plus
                    // haute et en dessous de la position ouverte la plus basse
 const orderSide = 'buy'
 
@@ -104,12 +104,12 @@ let worker = setInterval(() => {
       limitOrders.sort()
       
       // On affiche nos tableaux
-      // console.log('TAKE PROFIT ORDERS');
-      // console.log(takeProfitOrders);
-      // console.log('----');
-      // console.log('LIMIT ORDERS');
-      // console.log(limitOrders);
-      // console.log('----');
+      console.log('TAKE PROFIT ORDERS');
+      console.log(takeProfitOrders);
+      console.log('----');
+      console.log('LIMIT ORDERS');
+      console.log(limitOrders);
+      console.log('----');
       
       // On renseigne la variable highTradeValue qui est le niveau de prix de la position
       // ouverte la plus haute. Ce prix est calculé par rapport au take profit le plus
@@ -119,9 +119,9 @@ let worker = setInterval(() => {
       let lowTradeValue = round(Math.min(...takeProfitOrders) - distOnTakeProfit)
 
       // On affiche les deux valeurs ainsi calculées
-      // console.log(`high trade: ${highTradeValue}`)
-      // console.log(`low trade: ${lowTradeValue}`)
-      // console.log('----')
+     console.log(`high trade: ${highTradeValue}`)
+     console.log(`low trade: ${lowTradeValue}`)
+     console.log('----')
    
       // On rempli un tableau avec les niveau de prix des ordres que l'on devrait ouvrir
       for (let i = 1; i < nbOrders; i++) { 
@@ -148,9 +148,9 @@ let worker = setInterval(() => {
         }
       }
       
-      // console.log('ORDERS TO BE PLACED')
-      // console.log(ordersToBePlaced)
-      // console.log('----')
+     console.log('ORDERS TO BE PLACED')
+     console.log(ordersToBePlaced)
+     console.log('----')
 	 // type : (LIMIT),
 		//  intrument : (ccyPair),
 		  //units : (positionAmount),
@@ -166,9 +166,18 @@ let worker = setInterval(() => {
 		  type : 'MARKET_IF_TOUCHED',
           units: positionAmount,
           price: ordersToBePlaced[i].toString(),
-		  //takeProfitOnFill : {
-		//		price : ordersToBePlaced[i].toString() + distOnTakeProfit,
-		//  }
+		  // ESSAIS de TakeProfit qui ne fonctionnent pas ------------------------------------------------------------------>
+		  takeProfitOnFill : ordersToBePlaced[i].toString() + distOnTakeProfit
+		  //takeProfitOnFill.price (ordersToBePlaced[i].toString() + distOnTakeProfit)
+		  //takeProfit.price : ordersToBePlaced[i].toString() + distOnTakeProfit
+		  //TakeProfitDetails.price : ordersToBePlaced[i].toString() + distOnTakeProfit,
+		  //takeProfitOnFill { price : ordersToBePlaced[i].toString() + distOnTakeProfit
+		  //}
+		  //takeProfitOnFill : ( price : ordersToBePlaced[i].toString() + distOnTakeProfit),
+		  //takeProfitOnFill.price : ordersToBePlaced[i].toString() + distOnTakeProfit
+		  //takeProfitOnFill : 12,
+		  //transaction.TakeProfitDetails(price :ordersToBePlaced[i].toString() + distOnTakeProfit)
+		 
 		  
         })
 
