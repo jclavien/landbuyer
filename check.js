@@ -3,35 +3,24 @@
 const config = require('./lib/config')
 const utils = require('./lib/utils')
 
-const workerInterval = 10000 // 10 secondes en millisecondes
+const workerInterval = 60000 // 30 secondes en millisecondes
+const orderInterval = 1000  // 30 secondes en millisecondes
 const ccyPair = 'TRY_JPY' // Paire de devise sur laquelle le landbuyer est lancé
 const positionAmount = 20 // Montant de chaque position
-const distOnTakeProfit = 0.1 // Distance en pips du take profit
+const distOnTakeProfit = 0.05 // Distance en pips du take profit
 const distBetweenPosition = 1 // Distance en pips entre les positions 
 const nbOrders = 20 // Nombre d'ordres en dessus de la position ouverte la plus
                    // haute et en dessous de la position ouverte la plus basse
 
-// ------------------------ CONNEXION FX PRACTICE -------------------------------
-// const options = {
-//  hostname: 'api-fxpractice.oanda.com',
-//  streamingHostname: 'stream-fxpractice.oanda.com',
-//  port: 443,
-//  ssl: true,
-//  token: '6494b832545a92eb440d455e03ce1eac-1263e2633790a0c211a56bd21632409c',
-//  username: 'coeje',
-//  accounts: ['101-001-756041-001'],
-//  activeAccount: '101-001-756041-001',
-//}
-// ------------------------ CONNEXION FX TRADE -------------------------------
 const options = {
-  hostname: 'api-fxtrade.oanda.com',
-  streamingHostname: 'stream-fxtrade.oanda.com',
+  hostname: 'api-fxpractice.oanda.com',
+  streamingHostname: 'stream-fxpractice.oanda.com',
   port: 443,
   ssl: true,
-  token: 'c9b2cebd2412f15225359aa0fae10026-ae0b89033f2a58715fef3ee5706f70fc',
+  token: '6494b832545a92eb440d455e03ce1eac-1263e2633790a0c211a56bd21632409c',
   username: 'coeje',
-  accounts: ['001-004-293865-004'],
-  activeAccount: '001-004-293865-004',
+  accounts: ['101-001-756041-001'],
+  activeAccount: '101-001-756041-001',
 }
 
 function round(number) {
@@ -76,13 +65,13 @@ let worker = setInterval(() => {
       limitOrders.sort()
       
       // On affiche nos tableaux
-    /*
+      /*
       console.log('----')
       console.log('TAKE PROFIT ORDERS')
       console.log(takeProfitOrders)
       console.log('LIMIT ORDERS')
       console.log(limitOrders)
-	*/  
+      */
       
       let highTradeValue = round(Math.max(...takeProfitOrders) - distOnTakeProfit)
       let lowTradeValue = round(Math.min(...takeProfitOrders) - distOnTakeProfit)
