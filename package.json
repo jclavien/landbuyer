@@ -17,6 +17,7 @@
   "license": "ISC",
   "homepage": "https://bitbucket.org/jclavien/landbuyer#readme",
   "dependencies": {
-    "@oanda/v20": "^3.0.25-0"
+    "@oanda/v20": "^3.0.25-0",
+    "argparse": "^1.0.10"
   }
 }
