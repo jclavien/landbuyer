@@ -24,24 +24,18 @@ parser.addArgument(['-i', '--interval'], {
   }
 )
 
+parser.addArgument(['-d', '--dev'], {
+    help: 'Dev mode option',
+	action: 'storeTrue',
+    type: Boolean,
+    defaultValue: false,
+  }
+)
+
 let args = parser.parseArgs()
 
-/*
-// ------------------------ CONNEXION FX PRACTICE -----------------------------
-const options = {
-  hostname: 'api-fxpractice.oanda.com',
-  streamingHostname: 'stream-fxpractice.oanda.com',
-  port: 443,
-  ssl: true,
-  token: '6494b832545a92eb440d455e03ce1eac-1263e2633790a0c211a56bd21632409c',
-  username: 'coeje',
-  accounts: ['101-001-756041-001'],
-  activeAccount: '101-001-756041-001',
-}
-*/
-
 // ------------------------ CONNEXION FX TRADE -------------------------------
-const options = {
+const options = !args.dev ? {
   hostname: 'api-fxtrade.oanda.com',
   streamingHostname: 'stream-fxtrade.oanda.com',
   port: 443,
@@ -50,7 +44,18 @@ const options = {
   username: 'coeje',
   accounts: ['001-004-293865-004'],
   activeAccount: '001-004-293865-004',
-}
+} : {
+  hostname: 'api-fxpractice.oanda.com',
+  streamingHostname: 'stream-fxpractice.oanda.com',
+  port: 443,
+  ssl: true,
+  token: '6494b832545a92eb440d455e03ce1eac-1263e2633790a0c211a56bd21632409c',
+  username: 'coeje',
+  accounts: ['101-001-756041-001'],
+  activeAccount: '101-001-756041-001',
+};
+
+console.log(options);
 
 const oanda = new config.Config(options)
 const connection = oanda.createContext()
@@ -78,7 +83,7 @@ let worker = setInterval(() => {
 
       // Les infos du comptes sont stockées dans cette variable
       let account = response.body.account
-
+	
       // On test si il y a des pendingOrders, 
       if (account.pendingOrderCount > 0) {
         for (let order of account.orders) {
