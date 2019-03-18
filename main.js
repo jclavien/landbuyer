@@ -26,7 +26,7 @@ parser.addArgument(['-i', '--interval'], {
 
 parser.addArgument(['-d', '--dev'], {
     help: 'Dev mode option',
-	action: 'storeTrue',
+    action: 'storeTrue',
     type: Boolean,
     defaultValue: false,
   }
@@ -57,33 +57,33 @@ const options = !args.dev ? {
 
 console.log(options);
 
-const oanda = new config.Config(options)
-const connection = oanda.createContext()
+// Ceci est vraiment très bien, mais ça empêchera de faire planter
+// le programme à tout bout de champs
+try {
+  const oanda = new config.Config(options)
+  const connection = oanda.createContext()
 
-let iteration = 0
+  let iteration = 0
 
-let worker = setInterval(() => {
-  iteration += 1
-  
-  console.log(``)
-  console.log(`Round #${iteration}`)
+  let worker = setInterval(() => {
+    iteration += 1
+    
+    console.log(``)
+    console.log(`Round #${iteration}`)
 
-  let takeProfitOrders = new Array();
-  let limitOrders = new Array();
-  let ordersToBePlaced = new Array();
-  let takeProfitToBePlaced = new Array();
-  let searchedOrder = 0;
+    let takeProfitOrders = new Array();
+    let limitOrders = new Array();
+    let ordersToBePlaced = new Array();
+    let takeProfitToBePlaced = new Array();
+    let searchedOrder = 0;
 
-  // Ceci est vraiment très bien, mais ça empêchera de faire planter
-  // le programme à tout bout de champs
-  try {
     // On récupère les infos du compte
     connection.account.get(options.activeAccount, response => {
       utils.handleErrorResponse(response)
 
       // Les infos du comptes sont stockées dans cette variable
       let account = response.body.account
-	
+
       // On test si il y a des pendingOrders, 
       if (account.pendingOrderCount > 0) {
         for (let order of account.orders) {
@@ -152,10 +152,8 @@ let worker = setInterval(() => {
         }
       }
     })
-  } catch(error) {
-    console.log(`ERROR`)
-    console.log(error)
-    console.log(``)
-    console.log(``)
-  }
-}, args.interval)
+  }, args.interval)
+} catch(error) {
+  console.log(`ERROR`)
+  console.log(error)
+}
