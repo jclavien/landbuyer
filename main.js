@@ -61,14 +61,14 @@ const instruments = [
     ccyPair: 'USD_CHF',
     roundDecimalNumber: 4,
     positionAmount: 4,
-    distOnTakeProfit: 0.0015,
+    distOnTakeProfit: 0.0010,
     distBetweenPosition: 0.01,
     nbOrders: 3,
   }, {
     ccyPair: 'EUR_ZAR',
-    roundDecimalNumber: 4,
-    positionAmount: -50,
-    distOnTakeProfit: 0.02,
+    roundDecimalNumber: 2,
+    positionAmount: -20,
+    distOnTakeProfit: -0.04,
     distBetweenPosition: 1,
     nbOrders: 3,
   }
@@ -171,9 +171,10 @@ let worker = setInterval(() => {
               order,
               response => {
                 if (utils.handleErrorResponse(response)) {
-                  console.log('    Error during create order')
-                } else {
                   console.log(`    Order ${(i + 1)} created, value: ${ordersToBePlaced[i].toString()}`)
+                 
+                } else {
+                  console.log('    Error during create order')
                 }
               }
             )
