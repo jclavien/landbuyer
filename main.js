@@ -67,7 +67,7 @@ const instruments = [
   }, {
     ccyPair: 'EUR_ZAR',
     roundDecimalNumber: 2,
-    positionAmount: -10,
+    positionAmount: -5,
     distOnTakeProfit: -0.04,
     distBetweenPosition: 1,
     nbOrders: 5,
