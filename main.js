@@ -52,7 +52,7 @@ const instruments = [
   {
     ccyPair: 'TRY_JPY', // Paire de devise sur laquelle le landbuyer est lancé
     roundDecimalNumber: 2, // Nombre de décimale à utiliser
-    positionAmount: 20, // Montant de chaque position
+    positionAmount: 25, // Montant de chaque position
     distOnTakeProfit: 0.1, // Distance en pips du take profit
     distBetweenPosition: 1, // Distance en pips entre les positions 
     nbOrders: 5, // Nombre d'ordres en dessus de la position ouverte la plus
