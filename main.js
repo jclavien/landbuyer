@@ -60,7 +60,7 @@ const instruments = [
   }, {
     ccyPair: 'USD_CHF',
     roundDecimalNumber: 4,
-    positionAmount: 6,
+    positionAmount: 8,
     distOnTakeProfit: 0.0010,
     distBetweenPosition: 0.01,
     nbOrders: 5,
