@@ -52,7 +52,7 @@ const instruments = [
   {
     ccyPair: 'TRY_JPY', // Paire de devise sur laquelle le landbuyer est lancé
     roundDecimalNumber: 2, // Nombre de décimale à utiliser
-    positionAmount: 30, // Montant de chaque position
+    positionAmount: 40, // Montant de chaque position
     distOnTakeProfit: 0.1, // Distance en pips du take profit
     distBetweenPosition: 1, // Distance en pips entre les positions 
     nbOrders: 5, // Nombre d'ordres en dessus de la position ouverte la plus
@@ -60,14 +60,14 @@ const instruments = [
   }, {
     ccyPair: 'USD_CHF',
     roundDecimalNumber: 4,
-    positionAmount: 8,
+    positionAmount: 15,
     distOnTakeProfit: 0.0010,
     distBetweenPosition: 0.01,
     nbOrders: 5,
   }, {
     ccyPair: 'EUR_ZAR',
     roundDecimalNumber: 2,
-    positionAmount: -6,
+    positionAmount: -8,
     distOnTakeProfit: -0.04,
     distBetweenPosition: 1,
     nbOrders: 5,
