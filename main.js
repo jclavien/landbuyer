@@ -76,7 +76,7 @@ const instruments = [
     roundDecimalNumber: 2,
     positionAmount: 10,
     distOnTakeProfit: 0.10,
-    distBetweenPosition: 0.1,
+    distBetweenPosition: 1,
     nbOrders: 5,
   }
 ]
