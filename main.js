@@ -77,7 +77,7 @@ const instruments = [
     positionAmount: 10,
     distOnTakeProfit: 0.10,
     distBetweenPosition: 1,
-    nbOrders: 5,
+    nbOrders: 50,
   }
 ]
 
