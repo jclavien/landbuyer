@@ -71,6 +71,13 @@ const instruments = [
     distOnTakeProfit: -0.04,
     distBetweenPosition: 1,
     nbOrders: 50,
+  }, {
+    ccyPair: 'NZD_JPY',
+    roundDecimalNumber: 2,
+    positionAmount: 10,
+    distOnTakeProfit: 0.10,
+    distBetweenPosition: 1,
+    nbOrders: 50,
   }
 ]
 
