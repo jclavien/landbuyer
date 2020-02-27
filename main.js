@@ -55,7 +55,7 @@ const instruments = [
     positionAmount: 40, // Montant de chaque position
     distOnTakeProfit: 0.1, // Distance en pips du take profit
     distBetweenPosition: 1, // Distance en pips entre les positions 
-    nbOrders: 50, // Nombre d'ordres en dessus de la position ouverte la plus
+    nbOrders: 10, // Nombre d'ordres en dessus de la position ouverte la plus
                  // haute et en dessous de la position ouverte la plus basse
   }, {
     ccyPair: 'USD_CHF',
@@ -63,21 +63,21 @@ const instruments = [
     positionAmount: 30,
     distOnTakeProfit: 0.0010,
     distBetweenPosition: 0.01,
-    nbOrders: 50,
+    nbOrders: 10,
   }, {
     ccyPair: 'EUR_ZAR',
     roundDecimalNumber: 2,
     positionAmount: -8,
     distOnTakeProfit: -0.04,
     distBetweenPosition: 1,
-    nbOrders: 50,
+    nbOrders: 10,
   }, {
     ccyPair: 'NZD_JPY',
     roundDecimalNumber: 2,
     positionAmount: 10,
     distOnTakeProfit: 0.10,
     distBetweenPosition: 1,
-    nbOrders: 50,
+    nbOrders: 10,
   }
 ]
 
