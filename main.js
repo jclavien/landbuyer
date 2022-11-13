@@ -61,33 +61,12 @@ const options = !args.dev ? {
 // Constante de configuration
 const instruments = [
   {
-    ccyPair: 'TRY_JPY',
-    roundDecimalNumber: 2,
-    positionAmount: 40,
-    distOnTakeProfit: 0.1,
-    distBetweenPosition: 1,
-    nbOrders: 10,
-  }, {
     ccyPair: 'USD_CHF',
     roundDecimalNumber: 4,
-    positionAmount: 30,
+    positionAmount: 50,
     distOnTakeProfit: 0.0010,
     distBetweenPosition: 0.01,
-    nbOrders: 10,
-  }, {
-    ccyPair: 'EUR_ZAR',
-    roundDecimalNumber: 2,
-    positionAmount: -8,
-    distOnTakeProfit: -0.04,
-    distBetweenPosition: 1,
-    nbOrders: 10,
-  }, {
-    ccyPair: 'NZD_JPY',
-    roundDecimalNumber: 2,
-    positionAmount: 10,
-    distOnTakeProfit: 0.10,
-    distBetweenPosition: 1,
-    nbOrders: 10,
+    nbOrders: 20,
   }
 ]
 
