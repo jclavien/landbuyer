@@ -47,16 +47,26 @@ const options = !args.dev ? {
   activeAccount: '101-001-756041-001',
 };
 
+// Instrument example
+// {
+//   ccyPair: 'TRY_JPY', // Paire de devise sur laquelle le landbuyer est lancé
+//   roundDecimalNumber: 2, // Nombre de décimale à utiliser
+//   positionAmount: 40, // Montant de chaque position
+//   distOnTakeProfit: 0.1, // Distance en pips du take profit
+//   distBetweenPosition: 1, // Distance en pips entre les positions 
+//   nbOrders: 10, // Nombre d'ordres en dessus de la position ouverte la plus
+//                // haute et en dessous de la position ouverte la plus basse
+// }
+
 // Constante de configuration
 const instruments = [
   {
-    ccyPair: 'TRY_JPY', // Paire de devise sur laquelle le landbuyer est lancé
-    roundDecimalNumber: 2, // Nombre de décimale à utiliser
-    positionAmount: 40, // Montant de chaque position
-    distOnTakeProfit: 0.1, // Distance en pips du take profit
-    distBetweenPosition: 1, // Distance en pips entre les positions 
-    nbOrders: 10, // Nombre d'ordres en dessus de la position ouverte la plus
-                 // haute et en dessous de la position ouverte la plus basse
+    ccyPair: 'TRY_JPY',
+    roundDecimalNumber: 2,
+    positionAmount: 40,
+    distOnTakeProfit: 0.1,
+    distBetweenPosition: 1,
+    nbOrders: 10,
   }, {
     ccyPair: 'USD_CHF',
     roundDecimalNumber: 4,
@@ -96,100 +106,104 @@ let worker = setInterval(() => {
   console.log(``)
   console.log(`Round #${iteration}`)
 
-  // On récupère les infos du compte
-  connection.account.get(options.activeAccount, response => {
-    if (utils.handleErrorResponse(response)) {
+  try {
+    // On récupère les infos du compte
+    connection.account.get(options.activeAccount, response => {
+      if (utils.handleErrorResponse(response)) {
 
-      // Les infos du comptes sont stockées dans cette variable
-      let account = response.body.account
+        // Les infos du comptes sont stockées dans cette variable
+        let account = response.body.account
 
-      // On test si il y a des pendingOrders
-      if (account.pendingOrderCount > 0) {
-        instruments.forEach(opt => {
-          console.log(`  Instruments #${opt.ccyPair}`)
+        // On test si il y a des pendingOrders
+        if (account && account.pendingOrderCount > 0) {
+          instruments.forEach(opt => {
+            console.log(`  Instruments ${opt.ccyPair}`)
 
-          let tradeOrders = new Array();
-          let limitOrders = new Array();
-          let ordersToBePlaced = new Array();
-          let takeProfitToBePlaced = new Array();
-          let searchedOrder = 0;
+            let tradeOrders = new Array();
+            let limitOrders = new Array();
+            let ordersToBePlaced = new Array();
+            let takeProfitToBePlaced = new Array();
+            let searchedOrder = 0;
 
-          for (let trade of account.trades) {
-            if (trade.instrument == opt.ccyPair) {
-              tradeOrders.push(utils.round(trade.price, opt.roundDecimalNumber))
-            }
-          }
-
-          for (let order of account.orders) {
-            if (order.instrument == opt.ccyPair && order.type == 'MARKET_IF_TOUCHED') {
-              limitOrders.push(utils.round(order.price, opt.roundDecimalNumber))
-            }
-          }
-          
-          // On trie nos tableau dans l'ordre croissant
-          limitOrders.sort()
-          tradeOrders.sort()
-
-          let highTradeValue = utils.round(Math.max(...tradeOrders), opt.roundDecimalNumber)
-          let lowTradeValue = utils.round(Math.min(...tradeOrders), opt.roundDecimalNumber)
-
-          console.log(`    [high trade: ${highTradeValue} / low trade: ${lowTradeValue}]`)
-
-          // On rempli un tableau avec les niveau de prix des ordres que l'on devrait ouvrir
-          for (let i = 1; i < opt.nbOrders; i++) { 
-            searchedOrder = utils.round(i * opt.distBetweenPosition / 100 + highTradeValue, opt.roundDecimalNumber)
-
-            if (!limitOrders.includes(searchedOrder)) {
-              ordersToBePlaced.push(searchedOrder)
-              takeProfitToBePlaced.push(utils.round(searchedOrder + opt.distOnTakeProfit, opt.roundDecimalNumber))
-            }
-          }
-
-           // Idem pour les ordres inférieurs
-          for (let i = 1; i < opt.nbOrders; i++) {
-            searchedOrder= utils.round(lowTradeValue - i * opt.distBetweenPosition / 100, opt.roundDecimalNumber)
-
-            if (!limitOrders.includes(searchedOrder)) {
-              ordersToBePlaced.push(searchedOrder),
-              takeProfitToBePlaced.push(utils.round(searchedOrder + opt.distOnTakeProfit, opt.roundDecimalNumber))
-            }
-          }
-        
-          ordersToBePlaced.sort()
-          takeProfitToBePlaced.sort()
-
-          for (let i in ordersToBePlaced) {
-            // Ici on créer un objet de type LimitOrderRequest, avec différentes propriétés
-            let order = new connection.order.MarketIfTouchedOrderRequest({
-              instrument: opt.ccyPair,
-              type: 'MARKET_IF_TOUCHED',
-              units: opt.positionAmount,
-              timeInForce: 'GTC',
-              price: ordersToBePlaced[i].toString(),
-              takeProfitOnFill: {
-                timeInForce: 'GTC',
-                price: utils.round(ordersToBePlaced[i] + opt.distOnTakeProfit, opt.roundDecimalNumber).toString()
-              } 
-            })
-
-            // Ici on lance réellement la requête
-            connection.order.marketIfTouched(
-            options.activeAccount,
-              order,
-              response => {
-                if (utils.handleErrorResponse(response)) {
-                  console.log(`    Order ${(i + 1)} created, value: ${ordersToBePlaced[i].toString()}`)
-                 
-                } else {
-                  console.log('    Error during create order')
-                }
+            for (let trade of account.trades) {
+              if (trade.instrument == opt.ccyPair) {
+                tradeOrders.push(utils.round(trade.price, opt.roundDecimalNumber))
               }
-            )
-          }
-        })
-      } else {
-        console.log('Error during account access')
+            }
+
+            for (let order of account.orders) {
+              if (order.instrument == opt.ccyPair && order.type == 'MARKET_IF_TOUCHED') {
+                limitOrders.push(utils.round(order.price, opt.roundDecimalNumber))
+              }
+            }
+            
+            // On trie nos tableau dans l'ordre croissant
+            limitOrders.sort()
+            tradeOrders.sort()
+
+            let highTradeValue = utils.round(Math.max(...tradeOrders), opt.roundDecimalNumber)
+            let lowTradeValue = utils.round(Math.min(...tradeOrders), opt.roundDecimalNumber)
+
+            console.log(`    [high trade: ${highTradeValue} / low trade: ${lowTradeValue}]`)
+
+            // On rempli un tableau avec les niveau de prix des ordres que l'on devrait ouvrir
+            for (let i = 1; i < opt.nbOrders; i++) { 
+              searchedOrder = utils.round(i * opt.distBetweenPosition / 100 + highTradeValue, opt.roundDecimalNumber)
+
+              if (!limitOrders.includes(searchedOrder)) {
+                ordersToBePlaced.push(searchedOrder)
+                takeProfitToBePlaced.push(utils.round(searchedOrder + opt.distOnTakeProfit, opt.roundDecimalNumber))
+              }
+            }
+
+            // Idem pour les ordres inférieurs
+            for (let i = 1; i < opt.nbOrders; i++) {
+              searchedOrder= utils.round(lowTradeValue - i * opt.distBetweenPosition / 100, opt.roundDecimalNumber)
+
+              if (!limitOrders.includes(searchedOrder)) {
+                ordersToBePlaced.push(searchedOrder),
+                takeProfitToBePlaced.push(utils.round(searchedOrder + opt.distOnTakeProfit, opt.roundDecimalNumber))
+              }
+            }
+          
+            ordersToBePlaced.sort()
+            takeProfitToBePlaced.sort()
+
+            for (let i in ordersToBePlaced) {
+              // Ici on créer un objet de type LimitOrderRequest, avec différentes propriétés
+              let order = new connection.order.MarketIfTouchedOrderRequest({
+                instrument: opt.ccyPair,
+                type: 'MARKET_IF_TOUCHED',
+                units: opt.positionAmount,
+                timeInForce: 'GTC',
+                price: ordersToBePlaced[i].toString(),
+                takeProfitOnFill: {
+                  timeInForce: 'GTC',
+                  price: utils.round(ordersToBePlaced[i] + opt.distOnTakeProfit, opt.roundDecimalNumber).toString()
+                } 
+              })
+
+              // Ici on lance réellement la requête
+              connection.order.marketIfTouched(
+              options.activeAccount,
+                order,
+                response => {
+                  if (utils.handleErrorResponse(response)) {
+                    console.log(`    Order ${(i + 1)} created, value: ${ordersToBePlaced[i].toString()}`)
+                  
+                  } else {
+                    console.log('    Error during create order')
+                  }
+                }
+              )
+            }
+          })
+        } else {
+          console.log('Error during account access')
+        }
       }
-    }
-  })
+    })
+  } catch (error) {
+    console.log('General error')
+  }
 }, args.interval)
