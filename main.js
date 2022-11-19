@@ -70,34 +70,43 @@ const instruments = [
   }
 ]
 
-console.log(options)
-
-// Ceci est vraiment très bien, mais ça empêchera de faire planter
-// le programme à tout bout de champs
-const oanda = new config.Config(options)
-const connection = oanda.createContext()
-
+// Init variables
+let connection
 let iteration = 0
 
-let worker = setInterval(() => {
+// Init Oanda
+try {
+  const oanda = new config.Config(options)
+  connection = oanda.createContext()
+} catch(error) {
+  console.log('Error: oanda initialization')
+  console.log(error)
+}
+
+// Run main function
+setInterval(() => {
+  iteration = run(iteration, connection)
+}, args.interval)
+
+// Global exception catcher
+process.on('uncaughtException', (error) => {
+  console.log('Error: global exception occured')
+  console.log(error)
+})
+
+function run(iteration, connection) {
   iteration += 1
-  
-  console.log(``)
-  console.log(`Round #${iteration}`)
 
   try {
     // On récupère les infos du compte
     connection.account.get(options.activeAccount, response => {
       if (utils.handleErrorResponse(response)) {
-
         // Les infos du comptes sont stockées dans cette variable
         let account = response.body.account
 
         // On test si il y a des pendingOrders
         if (account && account.pendingOrderCount > 0) {
           instruments.forEach(opt => {
-            console.log(`  Instruments ${opt.ccyPair}`)
-
             let tradeOrders = new Array();
             let limitOrders = new Array();
             let ordersToBePlaced = new Array();
@@ -123,8 +132,6 @@ let worker = setInterval(() => {
             let highTradeValue = utils.round(Math.max(...tradeOrders), opt.roundDecimalNumber)
             let lowTradeValue = utils.round(Math.min(...tradeOrders), opt.roundDecimalNumber)
 
-            console.log(`    [high trade: ${highTradeValue} / low trade: ${lowTradeValue}]`)
-
             // On rempli un tableau avec les niveau de prix des ordres que l'on devrait ouvrir
             for (let i = 1; i < opt.nbOrders; i++) { 
               searchedOrder = utils.round(i * opt.distBetweenPosition / 100 + highTradeValue, opt.roundDecimalNumber)
@@ -148,6 +155,15 @@ let worker = setInterval(() => {
             ordersToBePlaced.sort()
             takeProfitToBePlaced.sort()
 
+            if (ordersToBePlaced.length > 0) {
+              console.log(``)
+              console.log(`Round #${iteration}:`)
+              console.log(`  Instruments ${opt.ccyPair}`)
+              console.log(`  High trade: ${highTradeValue}`)
+              console.log(`  Low trade: ${lowTradeValue}]`)
+              console.log(`  Orders:`)
+            }
+
             for (let i in ordersToBePlaced) {
               // Ici on créer un objet de type LimitOrderRequest, avec différentes propriétés
               let order = new connection.order.MarketIfTouchedOrderRequest({
@@ -169,20 +185,22 @@ let worker = setInterval(() => {
                 response => {
                   if (utils.handleErrorResponse(response)) {
                     console.log(`    Order ${(i + 1)} created, value: ${ordersToBePlaced[i].toString()}`)
-                  
                   } else {
-                    console.log('    Error during create order')
+                    console.log('    Error: cannot create order')
                   }
                 }
               )
             }
           })
         } else {
-          console.log('Error during account access')
+          console.log('Error: no pending order found')
         }
       }
     })
-  } catch (error) {
-    console.log('General error')
+  } catch(error) {
+    console.log('Error: non specific while run (inside)')
+    console.log(error)
   }
-}, args.interval)
+
+  return iteration
+}
