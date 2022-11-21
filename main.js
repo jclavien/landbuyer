@@ -12,7 +12,7 @@ const parser = new ArgumentParser({
 parser.addArgument(['-i', '--interval'], {
     help: 'Worker interval in [millisecond]',
     type: Number,
-    defaultValue: 10000,
+    defaultValue: 1000,
   }
 )
 
@@ -63,10 +63,10 @@ const instruments = [
   {
     ccyPair: 'USD_CHF',
     roundDecimalNumber: 4,
-    positionAmount: 50,
+    positionAmount: 20,
     distOnTakeProfit: 0.0010,
     distBetweenPosition: 0.01,
-    nbOrders: 5,
+    nbOrders: 10,
   }
 ]
 
@@ -151,7 +151,7 @@ function run(iteration, connection) {
                 takeProfitToBePlaced.push(utils.round(searchedOrder + opt.distOnTakeProfit, opt.roundDecimalNumber))
               }
             }
-          
+          // MANQUE ICI LA SUPPRESSION DE TOUS LES ORDRES TROP ELOIGNES (OrdersTOBeCanceled)POUR NE GARDER QUE LES X ORDRES LES PLUS PROCHES DU BAS ET DU HAUT DU LANDBUYER -- BUT EVITER LA LIMITE DE 1000 ORDRES OUVERTS
             ordersToBePlaced.sort()
             takeProfitToBePlaced.sort()
 
