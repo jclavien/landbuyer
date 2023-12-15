@@ -2,7 +2,6 @@
 // https://tailwindcss.com/docs/configuration
 
 const plugin = require("tailwindcss/plugin")
-const defaultTheme = require('tailwindcss/defaultTheme')
 
 module.exports = {
   content: [
@@ -10,47 +9,60 @@ module.exports = {
     "../lib/*_web.ex",
     "../lib/*_web/**/*.*ex"
   ],
-  safelist: [
-    'font-bold',
-    'text-xl',
-    'list-disc',
-    'list-inside'
-  ],
   theme: {
-    boxShadow: {
-      'sm': "0 0 2px 0 rgb(0 0 0 / 0.05)",
-      'DEFAULT': "0 0 3px 0 rgb(0 0 0 / 0.1), 0 0 2px 0 rgb(0 0 0 / 0.1)",
-      'md': "0 0 6px 0 rgb(0 0 0 / 0.1), 0 0 4px 0 rgb(0 0 0 / 0.1)",
-      'lg': "0 0 15px 0 rgb(0 0 0 / 0.1), 0 0 6px 0 rgb(0 0 0 / 0.1)",
-      'xl': "0 0 25px 0 rgb(0 0 0 / 0.1), 0 0 10px 0 rgb(0 0 0 / 0.1)",
-      '2xl': "0 0 50px 0 rgb(0 0 0 / 0.25)",
-      'inner': "inset 0 2px 4px 0 rgb(0 0 0 / 0.05)",
-      'daylight': "inset 0 0 20px 10px rgba(0, 0, 0, 0.3)",
-      'ligthish': "inset 0 0 30px 15px rgba(0, 0, 0, 0.4)",
-      'darkish': "inset 0 0 40px 20px rgba(0, 0, 0, 0.5)",
-      'dark': "inset 0 0 60px 30px rgba(0, 0, 0, 0.6)",
-      'none': "0 0 #0000"
+    colors: {
+      white: '#ffffff',
+      black: '#000000',
+      transparent: 'transparent',
+      gray: {
+        25: 'rgb(202, 211, 245)',
+        50: 'rgb(184, 192, 224)',
+        75: 'rgb(165, 173, 203)',
+        100: 'rgb(147, 154, 183)',
+        200: 'rgb(128, 135, 162)',
+        300: 'rgb(110, 115, 141)',
+        400: 'rgb(91, 96, 120)',
+        500: 'rgb(73, 77, 100)',
+        600: 'rgb(54, 58, 79)',
+        700: 'rgb(36, 39, 58)',
+        800: 'rgb(30, 32, 48)',
+        900: 'rgb(24, 25, 38)',
+        950: 'rgb(16, 16, 26)',
+      },
+      red: '#d64f63',
+      yellow: '#eed49f',
+      green: '#a6da95',
+    },
+    fontFamily: {
+      mono: ['Menlo', 'Monaco', 'Courier New', 'monospace'],
+    },
+    fontSize: {
+      xs: '0.625rem',
+      sm: '0.75rem',
+      base: '0.875rem',
+      lg: '1rem',
+      xl: '1.125rem',
+      '2xl': '1.25rem',
+      '3xl': '1.5rem',
+      '4xl': '1.75rem',
+      '5xl': '2rem'
     },
     extend: {
-      fontFamily: {
-        sans: ['"Open Sans"', ...defaultTheme.fontFamily.sans],
-        serif: ['Lora', ...defaultTheme.fontFamily.serif],
-        'spell-title': ['Satisfy', ...defaultTheme.fontFamily.serif],
-        'spell-body': ['"Crimson Pro"', ...defaultTheme.fontFamily.serif],
-      },
       colors: {
-        brand: "#FD4F00"
-      },
-      spacing: {
-        '13': '3.25rem'
+        brand: "#a6da95",
       }
     },
   },
   plugins: [
     require("@tailwindcss/forms"),
+    // Allows prefixing tailwind classes with LiveView classes to add rules
+    // only when LiveView classes are applied, for example:
+    //
+    //     <div class="phx-click-loading:animate-ping">
+    //
     plugin(({addVariant}) => addVariant("phx-no-feedback", [".phx-no-feedback&", ".phx-no-feedback &"])),
     plugin(({addVariant}) => addVariant("phx-click-loading", [".phx-click-loading&", ".phx-click-loading &"])),
     plugin(({addVariant}) => addVariant("phx-submit-loading", [".phx-submit-loading&", ".phx-submit-loading &"])),
-    plugin(({addVariant}) => addVariant("phx-change-loading", [".phx-change-loading&", ".phx-change-loading &"]))
+    plugin(({addVariant}) => addVariant("phx-change-loading", [".phx-change-loading&", ".phx-change-loading &"])),
   ]
 }
