@@ -43,6 +43,6 @@ defmodule Landbuyer.Workers.Supervisor do
 
   @spec pause_worker(integer()) :: :ok
   def pause_worker(name) do
-    GenServer.call({:via, Registry, {:traders_registry, name}}, "stop")
+    GenServer.call({:via, Registry, {:traders_registry, name}}, :stop)
   end
 end

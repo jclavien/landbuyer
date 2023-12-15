@@ -9,13 +9,28 @@ defmodule Landbuyer.Workers.GenServer do
 
   @impl true
   def init(%State{account: account, trader: trader} = state) do
-    IO.puts("> Init GenServer #{"A#{account.id}/T#{trader.id}"} (from GenServer)")
+    IO.puts("> Init GenServer #{"A#{account.id}/T#{trader.id}"}")
+    IO.puts("  Account:")
+    IO.inspect(account)
+    IO.puts("  Trader:")
+    IO.inspect(trader)
+
+    Process.send_after(self(), :beat, trader.rate_ms)
+
     {:ok, state}
   end
 
   @impl true
-  def handle_call("stop", _from, state) do
+  def handle_call(:stop, _from, state) do
     {:stop, :normal, :ok, state}
+  end
+
+  @impl true
+  def handle_info(:beat, %State{account: account, trader: trader} = state) do
+    IO.puts("> Beat GenServer #{"A#{account.id}/T#{trader.id}"}")
+
+    Process.send_after(self(), :beat, trader.rate_ms)
+    {:noreply, state}
   end
 
   @impl true
