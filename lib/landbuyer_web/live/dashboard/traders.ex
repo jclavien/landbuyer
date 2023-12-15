@@ -111,8 +111,23 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
       </div>
 
       <div class="absolute top-0 right-0 bottom-0 flex items-center gap-2 p-2">
-        <.button class="grid place-content-center h-8">
+        <.button
+          :if={@trader.state == :active}
+          phx-click="toggle_trader_state"
+          phx-value-id={@trader.id}
+          theme={:error}
+          class="grid place-content-center h-8"
+        >
           Pause
+        </.button>
+        <.button
+          :if={@trader.state == :paused}
+          phx-click="toggle_trader_state"
+          phx-value-id={@trader.id}
+          theme={:primary}
+          class="grid place-content-center h-8"
+        >
+          Start
         </.button>
         <.button
           disabled={@trader.state != :paused}

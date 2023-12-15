@@ -31,10 +31,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
 
   @impl Phoenix.LiveView
   def handle_params(%{"account" => account_id}, _uri, socket) do
-    account_id = String.to_integer(account_id)
-    account = Enum.find(socket.assigns.accounts, fn account -> account.id == account_id end)
-
-    {:noreply, assign(socket, active_account: account)}
+    {:noreply, set_active_account(socket, account_id)}
   end
 
   def handle_params(_params, _uri, socket) do
@@ -181,6 +178,40 @@ defmodule LandbuyerWeb.Live.Dashboard do
   end
 
   @impl Phoenix.LiveView
+  def handle_event("toggle_trader_state", %{"id" => id}, socket) do
+    trader_id = String.to_integer(id)
+    trader = Enum.find(socket.assigns.active_account.traders, fn t -> t.id == trader_id end)
+    new_state = if trader.state == :active, do: :paused, else: :active
+    message = if trader.state == :active, do: "Trader mis en pause", else: "Trader démarré"
+
+    if new_state == :active do
+      # TODO:
+      # - Start trader with Supervisor
+      IO.inspect("Create worker")
+    end
+
+    if new_state == :paused do
+      # TODO:
+      # - Kill trader with Supervisor
+      IO.inspect("Kill worker")
+    end
+
+    case Accounts.update_trader(trader, %{"state" => new_state}) do
+      {:ok, _trader} ->
+        socket =
+          socket
+          |> default_assigns()
+          |> set_active_account(socket.assigns.active_account.id)
+          |> put_flash(:info, message)
+
+        {:noreply, socket}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Erreur lors du changement d'état du trader")}
+    end
+  end
+
+  @impl Phoenix.LiveView
   def handle_event("delete_trader", %{"id" => id}, socket) do
     account = socket.assigns.active_account
     trader = Enum.find(account.traders, fn t -> t.id == id end)
@@ -207,6 +238,15 @@ defmodule LandbuyerWeb.Live.Dashboard do
     |> assign(accounts: accounts)
     |> assign(account_count: account_count)
     |> assign(trader_count: trader_count)
+  end
+
+  defp set_active_account(socket, account_id) when is_binary(account_id) do
+    set_active_account(socket, String.to_integer(account_id))
+  end
+
+  defp set_active_account(socket, account_id) do
+    account = Enum.find(socket.assigns.accounts, fn account -> account.id == account_id end)
+    assign(socket, active_account: account)
   end
 
   defp default_account_changeset() do

@@ -10,7 +10,7 @@ defmodule Landbuyer.Accounts do
   @spec get(integer()) :: {:ok, Account.t()} | {:error, :not_found}
   def get(id) do
     subquery = from(t in Trader, order_by: [asc: t.id])
-    query = from(a in Account, where: a.id == ^id, preload: [traders: ^subquery])
+    query = from(a in Account, where: a.id == ^id, order_by: [asc: a.id], preload: [traders: ^subquery])
 
     case Repo.one(query) do
       nil -> {:error, :not_found}
@@ -20,7 +20,9 @@ defmodule Landbuyer.Accounts do
 
   @spec get_all() :: [Account.t()]
   def get_all() do
-    query = from(a in Account, order_by: [asc: a.id], preload: [:traders])
+    subquery = from(t in Trader, order_by: [asc: t.id])
+    query = from(a in Account, order_by: [asc: a.id], preload: [traders: ^subquery])
+
     Repo.all(query)
   end
 
