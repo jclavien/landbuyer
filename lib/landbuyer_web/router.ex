@@ -7,7 +7,7 @@ defmodule LandbuyerWeb.Router do
     plug(:accepts, ["html"])
     plug(:fetch_session)
     plug(:fetch_live_flash)
-    plug(:put_root_layout, {LandbuyerWeb.Layouts, :root})
+    plug(:put_root_layout, {LandbuyerWeb.Components.Layouts, :root})
     plug(:protect_from_forgery)
     plug(:put_secure_browser_headers)
   end

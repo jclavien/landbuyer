@@ -22,7 +22,6 @@ defmodule LandbuyerWeb do
   def router do
     quote do
       use Phoenix.Router, helpers: false
-
       # Import common connection and controller functions to use in pipelines
       import Plug.Conn
       import Phoenix.Controller
@@ -41,19 +40,16 @@ defmodule LandbuyerWeb do
       use Phoenix.Controller,
         namespace: LandbuyerWeb,
         formats: [:html, :json],
-        layouts: [html: LandbuyerWeb.Layouts]
+        layouts: [html: LandbuyerWeb.Components.Layouts]
 
       import Plug.Conn
-
       unquote(verified_routes())
     end
   end
 
   def live_view do
     quote do
-      use Phoenix.LiveView,
-        layout: {LandbuyerWeb.Layouts, :app}
-
+      use Phoenix.LiveView, layout: {LandbuyerWeb.Components.Layouts, :app}
       unquote(html_helpers())
     end
   end
@@ -61,7 +57,6 @@ defmodule LandbuyerWeb do
   def live_component do
     quote do
       use Phoenix.LiveComponent
-
       unquote(html_helpers())
     end
   end
@@ -69,11 +64,8 @@ defmodule LandbuyerWeb do
   def html do
     quote do
       use Phoenix.Component
-
       # Import convenience functions from controllers
-      import Phoenix.Controller,
-        only: [get_csrf_token: 0, view_module: 1, view_template: 1]
-
+      import Phoenix.Controller, only: [get_csrf_token: 0, view_module: 1, view_template: 1]
       # Include general helpers for rendering HTML
       unquote(html_helpers())
     end
@@ -84,14 +76,10 @@ defmodule LandbuyerWeb do
       # HTML escaping functionality
       import Phoenix.HTML
       # Core UI components and translation
-      import LandbuyerWeb.Components.Generic.Icon
       import LandbuyerWeb.CoreComponents
-
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS
-
       alias LandbuyerWeb.Live.Helper
-
       # Routes generation with the ~p sigil
       unquote(verified_routes())
     end
