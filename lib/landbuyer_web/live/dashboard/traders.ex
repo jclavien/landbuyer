@@ -1,0 +1,161 @@
+defmodule LandbuyerWeb.Live.Dashboard.Traders do
+  @moduledoc false
+
+  use LandbuyerWeb, :html
+
+  attr(:account, :map, required: true)
+
+  @spec traders_list(map()) :: Phoenix.LiveView.Rendered.t()
+  def traders_list(assigns) do
+    ~H"""
+    <h1 class="font-bold pb-4">
+      <%= @account.label %>
+    </h1>
+
+    <section :for={trader <- @account.traders} class="mb-3 text-sm border border-gray-700 bg-black/20 transition-all">
+      <.header trader={trader} account_id={@account.id} />
+      <.options trader={trader} />
+      <.graph />
+    </section>
+
+    <.button phx-click="toggle_form_trader" theme={:secondary}>
+      Ajouter un trader
+    </.button>
+    """
+  end
+
+  attr(:changeset, :map, required: true)
+
+  @spec traders_create(map()) :: Phoenix.LiveView.Rendered.t()
+  def traders_create(assigns) do
+    ~H"""
+    <div class="flex justify-between items-center gap-4 pb-4">
+      <h2 class="font-bold">
+        Ajouter un trader
+      </h2>
+      <.button theme={:ghost} only_icon={true} phx-click="toggle_form_trader">
+        &times;
+      </.button>
+    </div>
+
+    <.form :let={f} for={@changeset} phx-submit="create_trader" class="flex flex-col">
+      <.input type="select" field={{f, :strategy}} options={["Test1", "Test2"]} label="Stratégie" />
+      <.input field={{f, :rate_ms}} label="Intervale (en millisecondes)" placeholder="ex. 1000" />
+
+      <h3>Instrument</h3>
+      <div class="grid grid-cols-2 gap-x-4">
+        <.input field={{f, :cc1}} label="Pair de devise" placeholder="ex. CHF_USD" />
+        <.input field={{f, :cc2}} label="Nombre de décimales" placeholder="ex. 4" />
+      </div>
+
+      <h3>Options</h3>
+      <div class="grid grid-cols-1 gap-x-4">
+        <.input field={{f, :cc3}} label="Take profit" placeholder="ex. 0.001" />
+        <.input field={{f, :cc4}} label="Stop loss" placeholder="ex. 0.01" />
+        <.input field={{f, :cc5}} label="Dist. entre positions" placeholder="ex. 0.01" />
+        <.input field={{f, :cc6}} label="Montant position" placeholder="ex. 20" />
+        <.input field={{f, :cc7}} label="Maximum d'ordres" placeholder="ex. 10" />
+      </div>
+
+      <.button>
+        Ajouter le trader
+      </.button>
+    </.form>
+    """
+  end
+
+  attr(:account_id, :integer, required: true)
+  attr(:trader, :map, required: true)
+
+  @spec header(map()) :: Phoenix.LiveView.Rendered.t()
+  defp header(assigns) do
+    ~H"""
+    <header class="relative p-4 border-b border-gray-700">
+      <div class="flex gap-5 items-baseline">
+        <h2 class="flex gap-2 items-center text-base">
+          <div :if={@trader.state == :active} class="w-3 h-3 rounded-full bg-green"></div>
+          <div :if={@trader.state == :paused} class="w-3 h-3 rounded-full bg-gray-200"></div>
+          <%= "Trader A#{@account_id}/T#{@trader.id}" %>
+        </h2>
+
+        <span :if={@trader.state == :active} class="opacity-50">
+          Actif
+        </span>
+        <span :if={@trader.state == :paused} class="opacity-50">
+          En pause
+        </span>
+      </div>
+
+      <div class="absolute top-0 right-0 bottom-0 flex items-center gap-2 p-2">
+        <.button class="grid place-content-center h-8">
+          Pause
+        </.button>
+        <.button theme={:secondary} class="grid place-content-center h-8">
+          Modifier
+        </.button>
+        <.button theme={:error} class="grid place-content-center text-xl w-8 h-8">
+          &times;
+        </.button>
+      </div>
+    </header>
+    """
+  end
+
+  attr(:trader, :map, required: true)
+
+  @spec options(map()) :: Phoenix.LiveView.Rendered.t()
+  defp options(assigns) do
+    ~H"""
+    <div class="grid grid-cols-5 p-4 border-b border-gray-700">
+      <.label_value label="Stratégie" value={@trader.strategy} />
+      <.label_value label="Intervale" value={@trader.rate_ms} unit="ms" />
+      <.label_value
+        label="Instrument"
+        value={@trader.instrument.currency_pair}
+        unit={"(#{@trader.instrument.round_decimal} décimales)"}
+      />
+    </div>
+
+    <div class="grid grid-cols-5 p-4 border-b border-gray-700">
+      <.label_value label="Take profit" value={@trader.options.distance_on_take_profit} unit="pips" />
+      <.label_value label="Stop loss" value={@trader.options.distance_on_stop_loss} unit="pips" />
+      <.label_value label="Distance entre positions" value={@trader.options.distance_between_position} unit="pips" />
+      <.label_value label="Montant de la position" value={@trader.options.position_amount} unit="unités" />
+      <.label_value label="Maximum d'ordres" value={@trader.options.max_order} unit="x2" />
+    </div>
+    """
+  end
+
+  @spec graph(map()) :: Phoenix.LiveView.Rendered.t()
+  defp graph(assigns) do
+    ~H"""
+    <div class="p-4 opacity-50">
+      Affichage des derniers ordres
+    </div>
+    """
+  end
+
+  attr(:label, :string, required: true)
+  attr(:value, :string, required: true)
+  attr(:unit, :string, default: nil)
+  attr(:class, :string, default: "")
+
+  @spec label_value(map()) :: Phoenix.LiveView.Rendered.t()
+  defp label_value(assigns) do
+    ~H"""
+    <div class={["flex flex-col opacity-80", @class]}>
+      <span class="font-bold">
+        <%= @label %>
+      </span>
+      <span class="flex items-baseline gap-1">
+        <span class="text-base whitespace-nowrap overflow-hidden">
+          <%= @value %>
+        </span>
+        <span :if={@unit} class="text-sm opacity-50">
+          <%= @unit %>
+        </span>
+      </span>
+    </div>
+    """
+  end
+end
