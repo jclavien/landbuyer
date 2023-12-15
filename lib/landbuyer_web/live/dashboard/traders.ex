@@ -3,6 +3,8 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
 
   use LandbuyerWeb, :html
 
+  alias Landbuyer.Schemas.Trader
+
   attr(:account, :map, required: true)
 
   @spec traders_list(map()) :: Phoenix.LiveView.Rendered.t()
@@ -39,23 +41,28 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
     </div>
 
     <.form :let={f} for={@changeset} phx-submit="create_trader" class="flex flex-col">
-      <.input type="select" field={{f, :strategy}} options={["Test1", "Test2"]} label="Stratégie" />
+      <.input type="hidden" field={{f, :state}} />
+      <.input type="select" field={{f, :strategy}} options={Trader.strategies()} label="Stratégie" />
       <.input field={{f, :rate_ms}} label="Intervale (en millisecondes)" placeholder="ex. 1000" />
 
       <h3>Instrument</h3>
-      <div class="grid grid-cols-2 gap-x-4">
-        <.input field={{f, :cc1}} label="Pair de devise" placeholder="ex. CHF_USD" />
-        <.input field={{f, :cc2}} label="Nombre de décimales" placeholder="ex. 4" />
-      </div>
+      <.inputs_for :let={f_instrument} field={f[:instrument]}>
+        <div class="grid grid-cols-2 gap-x-4">
+          <.input field={{f_instrument, :currency_pair}} label="Pair de devise" placeholder="ex. CHF_USD" />
+          <.input field={{f_instrument, :round_decimal}} label="Nombre de décimales" placeholder="ex. 4" />
+        </div>
+      </.inputs_for>
 
       <h3>Options</h3>
-      <div class="grid grid-cols-1 gap-x-4">
-        <.input field={{f, :cc3}} label="Take profit" placeholder="ex. 0.001" />
-        <.input field={{f, :cc4}} label="Stop loss" placeholder="ex. 0.01" />
-        <.input field={{f, :cc5}} label="Dist. entre positions" placeholder="ex. 0.01" />
-        <.input field={{f, :cc6}} label="Montant position" placeholder="ex. 20" />
-        <.input field={{f, :cc7}} label="Maximum d'ordres" placeholder="ex. 10" />
-      </div>
+      <.inputs_for :let={f_options} field={f[:options]}>
+        <div class="grid grid-cols-2 gap-x-4">
+          <.input field={{f_options, :distance_on_take_profit}} label="Take profit" placeholder="ex. 0.001" />
+          <.input field={{f_options, :distance_on_stop_loss}} label="Stop loss" placeholder="ex. 0.01" />
+          <.input field={{f_options, :distance_between_position}} label="Dist. entre positions" placeholder="ex. 0.01" />
+          <.input field={{f_options, :position_amount}} label="Montant position" placeholder="ex. 20" />
+          <.input field={{f_options, :max_order}} label="Maximum d'ordres" placeholder="ex. 10" />
+        </div>
+      </.inputs_for>
 
       <.button>
         Ajouter le trader

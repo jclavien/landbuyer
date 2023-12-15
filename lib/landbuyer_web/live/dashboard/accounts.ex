@@ -71,7 +71,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
       </h1>
     </div>
 
-    <.form :let={f} for={@changeset |> to_form} phx-submit="create_account" class="flex flex-col">
+    <.form :let={f} for={@changeset} phx-submit="create_account" class="flex flex-col">
       <.input field={{f, :label}} label="Nom du compte" placeholder="ex. Compte de test" />
       <.input field={{f, :oanda_id}} label="ID du compte Oanda" placeholder="ex. xxx-xxx-xxxxxx-xxx" />
       <.input field={{f, :hostname}} label="URL du service" placeholder="ex. api-fxpractice.oanda.com" />

@@ -11,7 +11,7 @@ defmodule Landbuyer.Schemas.Trader do
   alias Landbuyer.Schemas.TraderOptions
 
   @states [:paused, :active]
-  @strategies [:default]
+  @strategies [:default, :test]
 
   @type t() :: %Trader{
           id: integer() | nil,
@@ -41,5 +41,10 @@ defmodule Landbuyer.Schemas.Trader do
     |> validate_inclusion(:strategy, @strategies)
     |> cast_embed(:instrument, with: &Instrument.changeset/2)
     |> cast_embed(:options, with: &TraderOptions.changeset/2)
+  end
+
+  @spec strategies() :: Keyword.t()
+  def strategies() do
+    ["Par défaut": :default, Test: :test]
   end
 end

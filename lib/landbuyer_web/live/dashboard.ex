@@ -12,8 +12,6 @@ defmodule LandbuyerWeb.Live.Dashboard do
   alias Landbuyer.Accounts
   alias Landbuyer.Schemas.Account
   alias Landbuyer.Schemas.Trader
-  # alias Landbuyer.Schemas.Instrument
-  # alias Landbuyer.Schemas.TraderOptions
 
   @impl Phoenix.LiveView
   def mount(_params, _session, socket) do
@@ -120,8 +118,23 @@ defmodule LandbuyerWeb.Live.Dashboard do
 
   @impl Phoenix.LiveView
   def handle_event("create_trader", %{"trader" => trader}, socket) do
-    IO.inspect(trader)
-    {:noreply, socket}
+    account = socket.assigns.active_account
+
+    case Accounts.create_trader(account, trader) do
+      {:ok, _trader} ->
+        socket =
+          socket
+          |> default_assigns()
+          |> assign(show_form_trader: false)
+          |> assign(trader_changeset: default_trader_changeset())
+          |> put_flash(:info, "Trader ajouté")
+          |> push_patch(to: ~p"/account/#{account.id}")
+
+        {:noreply, socket}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, trader_changeset: changeset)}
+    end
   end
 
   @impl Phoenix.LiveView
