@@ -18,5 +18,6 @@ defmodule LandbuyerWeb.Router do
     pipe_through([:browser, Plugs.Auth])
 
     live("/", Dashboard)
+    live("/account/:account", Dashboard)
   end
 end
