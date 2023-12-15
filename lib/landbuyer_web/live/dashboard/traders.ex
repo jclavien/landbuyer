@@ -115,7 +115,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
           :if={@trader.state == :active}
           phx-click="toggle_trader_state"
           phx-value-id={@trader.id}
-          theme={:error}
+          theme={:secondary}
           class="grid place-content-center h-8"
         >
           Pause

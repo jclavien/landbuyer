@@ -5,6 +5,8 @@ defmodule Landbuyer.Application do
 
   use Application
 
+  alias Landbuyer.Workers
+
   @impl Application
   def start(_type, _args) do
     children = [
@@ -17,15 +19,21 @@ defmodule Landbuyer.Application do
       # Start Finch
       {Finch, name: Landbuyer.Finch},
       # Start the Endpoint (http/https)
-      LandbuyerWeb.Endpoint
-      # Start a worker by calling: Landbuyer.Worker.start_link(arg)
-      # {Landbuyer.Worker, arg}
+      LandbuyerWeb.Endpoint,
+      # Start traders supervisor
+      {Registry, keys: :unique, name: :traders_registry},
+      Workers.Supervisor
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Landbuyer.Supervisor]
-    Supervisor.start_link(children, opts)
+    resp = Supervisor.start_link(children, opts)
+
+    # Spawn worker
+    Workers.Supervisor.maybe_spawn_active_traders()
+
+    resp
   end
 
   # Tell Phoenix to update the endpoint configuration
@@ -33,6 +41,10 @@ defmodule Landbuyer.Application do
   @impl Application
   def config_change(changed, _new, removed) do
     LandbuyerWeb.Endpoint.config_change(changed, removed)
+
+    # Spawn worker
+    Workers.Supervisor.maybe_spawn_active_traders()
+
     :ok
   end
 end

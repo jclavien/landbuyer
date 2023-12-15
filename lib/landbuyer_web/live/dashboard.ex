@@ -12,6 +12,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
   alias Landbuyer.Accounts
   alias Landbuyer.Schemas.Account
   alias Landbuyer.Schemas.Trader
+  alias Landbuyer.Workers.Supervisor
 
   @impl Phoenix.LiveView
   def mount(_params, _session, socket) do
@@ -179,29 +180,27 @@ defmodule LandbuyerWeb.Live.Dashboard do
 
   @impl Phoenix.LiveView
   def handle_event("toggle_trader_state", %{"id" => id}, socket) do
+    account = socket.assigns.active_account
     trader_id = String.to_integer(id)
-    trader = Enum.find(socket.assigns.active_account.traders, fn t -> t.id == trader_id end)
+    trader = Enum.find(account.traders, fn t -> t.id == trader_id end)
     new_state = if trader.state == :active, do: :paused, else: :active
-    message = if trader.state == :active, do: "Trader mis en pause", else: "Trader démarré"
-
-    if new_state == :active do
-      # TODO:
-      # - Start trader with Supervisor
-      IO.inspect("Create worker")
-    end
-
-    if new_state == :paused do
-      # TODO:
-      # - Kill trader with Supervisor
-      IO.inspect("Kill worker")
-    end
 
     case Accounts.update_trader(trader, %{"state" => new_state}) do
-      {:ok, _trader} ->
+      {:ok, trader} ->
+        message = if trader.state == :paused, do: "Trader mis en pause", else: "Trader démarré"
+
+        if trader.state == :active do
+          Supervisor.create_worker(account, trader)
+        end
+
+        if trader.state == :paused do
+          Supervisor.pause_worker(trader.id)
+        end
+
         socket =
           socket
           |> default_assigns()
-          |> set_active_account(socket.assigns.active_account.id)
+          |> set_active_account(account.id)
           |> put_flash(:info, message)
 
         {:noreply, socket}
