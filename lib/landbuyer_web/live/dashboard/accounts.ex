@@ -13,7 +13,10 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
     </h1>
 
     <div :for={account <- @accounts} class="relative mb-3 text-sm">
-      <.modal id={"confirm-modal-#{account.id}"} on_confirm={JS.push("delete_account", value: %{id: account.id})}>
+      <.modal
+        id={"account-modal-#{account.id}"}
+        on_confirm={JS.push("delete_account", value: %{id: account.id}) |> hide_modal("account-modal-#{account.id}")}
+      >
         Confirmation de suppression
         <:confirm>
           <.button theme={:error}>
@@ -29,7 +32,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
 
       <button
         :if={length(account.traders) == 0}
-        phx-click={show_modal("confirm-modal-#{account.id}")}
+        phx-click={show_modal("account-modal-#{account.id}")}
         phx-value-id={account.id}
         class="absolute grid place-content-center text-xl top-2 right-2 w-5 h-5 border border-black/80 bg-red/60 text-black/80 hover:bg-red transition-all"
       >

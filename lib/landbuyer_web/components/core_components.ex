@@ -186,6 +186,7 @@ defmodule LandbuyerWeb.CoreComponents do
       type={@type}
       class={[
         "phx-submit-loading:opacity-75 flex gap-3 border text-left transition-all",
+        "disabled:opacity-50",
         theme(@theme),
         only_icon(@only_icon),
         @class
@@ -197,10 +198,10 @@ defmodule LandbuyerWeb.CoreComponents do
     """
   end
 
-  defp theme(:primary), do: "bg-gray-800 hover:bg-gray-900 border-green text-green"
-  defp theme(:secondary), do: "bg-gray-800 hover:bg-gray-900 border-gray-500 text-gray-50"
-  defp theme(:error), do: "bg-gray-800 hover:bg-gray-900 border-red text-red"
-  defp theme(:ghost), do: "text-gray-50 hover:text-white border-transparent"
+  defp theme(:primary), do: "bg-gray-800 disabled:hover:bg-gray-800 hover:bg-gray-900 border-green text-green"
+  defp theme(:secondary), do: "bg-gray-800 disabled:hover:bg-gray-800 hover:bg-gray-900 border-gray-500 text-gray-50"
+  defp theme(:error), do: "bg-gray-800 disabled:hover:bg-gray-800 hover:bg-gray-900 border-red text-red"
+  defp theme(:ghost), do: "text-gray-50 disabled:hover:text-gray-50 hover:text-white border-transparent"
 
   defp only_icon(false), do: "text-sm py-3 px-4"
   defp only_icon(true), do: "text-xl"

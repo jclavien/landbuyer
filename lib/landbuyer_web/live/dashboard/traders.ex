@@ -26,21 +26,22 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
     """
   end
 
+  attr(:edit, :boolean, required: true)
   attr(:changeset, :map, required: true)
 
   @spec traders_create(map()) :: Phoenix.LiveView.Rendered.t()
   def traders_create(assigns) do
     ~H"""
     <div class="flex justify-between items-center gap-4 pb-4">
-      <h2 class="font-bold">
-        Ajouter un trader
-      </h2>
+      <h2 :if={@edit} class="font-bold">Modifier un trader</h2>
+      <h2 :if={not @edit} class="font-bold">Ajouter un trader</h2>
       <.button theme={:ghost} only_icon={true} phx-click="toggle_form_trader">
         &times;
       </.button>
     </div>
 
-    <.form :let={f} for={@changeset} phx-submit="create_trader" class="flex flex-col">
+    <.form :let={f} for={@changeset} phx-submit={if(@edit, do: "update_trader", else: "create_trader")} class="flex flex-col">
+      <.input :if={@edit} type="hidden" field={{f, :id}} />
       <.input type="hidden" field={{f, :state}} />
       <.input type="select" field={{f, :strategy}} options={Trader.strategies()} label="Stratégie" />
       <.input field={{f, :rate_ms}} label="Intervale (en millisecondes)" placeholder="ex. 1000" />
@@ -64,9 +65,8 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
         </div>
       </.inputs_for>
 
-      <.button>
-        Ajouter le trader
-      </.button>
+      <.button :if={@edit}>Modifier le trader</.button>
+      <.button :if={not @edit}>Ajouter le trader</.button>
     </.form>
     """
   end
@@ -77,6 +77,23 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
   @spec header(map()) :: Phoenix.LiveView.Rendered.t()
   defp header(assigns) do
     ~H"""
+    <.modal
+      id={"modal-#{@trader.id}"}
+      on_confirm={JS.push("delete_trader", value: %{id: @trader.id}) |> hide_modal("modal-#{@trader.id}")}
+    >
+      Confirmation de suppression
+      <:confirm>
+        <.button theme={:error}>
+          Supprimer
+        </.button>
+      </:confirm>
+      <:cancel>
+        <.button theme={:secondary}>
+          Annuler
+        </.button>
+      </:cancel>
+    </.modal>
+
     <header class="relative p-4 border-b border-gray-700">
       <div class="flex gap-5 items-baseline">
         <h2 class="flex gap-2 items-center text-base">
@@ -97,10 +114,21 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
         <.button class="grid place-content-center h-8">
           Pause
         </.button>
-        <.button theme={:secondary} class="grid place-content-center h-8">
+        <.button
+          disabled={@trader.state != :paused}
+          phx-click="toggle_form_trader"
+          phx-value-id={@trader.id}
+          theme={:secondary}
+          class="grid place-content-center h-8"
+        >
           Modifier
         </.button>
-        <.button theme={:error} class="grid place-content-center text-xl w-8 h-8">
+        <.button
+          disabled={@trader.state != :paused}
+          phx-click={show_modal("modal-#{@trader.id}")}
+          theme={:error}
+          class="grid place-content-center text-xl w-8 h-8"
+        >
           &times;
         </.button>
       </div>

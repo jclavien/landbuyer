@@ -23,6 +23,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
       |> assign(show_form_account: false)
       |> assign(account_changeset: default_account_changeset())
       |> assign(show_form_trader: false)
+      |> assign(trader_edit: false)
       |> assign(trader_changeset: default_trader_changeset())
 
     {:ok, socket}
@@ -63,7 +64,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
             not @show_form_trader && "-right-96"
           ]}>
             <div :if={@show_form_trader} phx-click-away="toggle_form_trader" class="h-full p-4 overflow-y-auto">
-              <.traders_create changeset={@trader_changeset} />
+              <.traders_create changeset={@trader_changeset} edit={@trader_edit} />
             </div>
           </div>
         </div>
@@ -80,8 +81,27 @@ defmodule LandbuyerWeb.Live.Dashboard do
   end
 
   @impl Phoenix.LiveView
+  def handle_event("toggle_form_trader", %{"id" => trader_id}, socket) do
+    trader_id = String.to_integer(trader_id)
+    trader = Enum.find(socket.assigns.active_account.traders, fn t -> t.id == trader_id end)
+
+    socket =
+      socket
+      |> assign(show_form_trader: not socket.assigns.show_form_trader)
+      |> assign(trader_edit: true)
+      |> assign(trader_changeset: Trader.changeset(trader, %{}))
+
+    {:noreply, socket}
+  end
+
+  @impl Phoenix.LiveView
   def handle_event("toggle_form_trader", _params, socket) do
-    {:noreply, assign(socket, show_form_trader: not socket.assigns.show_form_trader)}
+    socket =
+      socket
+      |> assign(show_form_trader: not socket.assigns.show_form_trader)
+      |> assign(trader_edit: false)
+
+    {:noreply, socket}
   end
 
   @impl Phoenix.LiveView
@@ -138,15 +158,44 @@ defmodule LandbuyerWeb.Live.Dashboard do
   end
 
   @impl Phoenix.LiveView
-  def handle_event("update_trader", %{"trader" => trader}, socket) do
-    IO.inspect(trader)
-    {:noreply, socket}
+  def handle_event("update_trader", %{"trader" => params}, socket) do
+    account = socket.assigns.active_account
+    trader_id = String.to_integer(params["id"])
+    trader = Enum.find(account.traders, fn t -> t.id == trader_id end)
+
+    case Accounts.update_trader(trader, params) do
+      {:ok, _trader} ->
+        socket =
+          socket
+          |> default_assigns()
+          |> assign(show_form_trader: false)
+          |> assign(trader_changeset: default_trader_changeset())
+          |> put_flash(:info, "Trader modifié")
+          |> push_patch(to: ~p"/account/#{account.id}")
+
+        {:noreply, socket}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, trader_changeset: changeset)}
+    end
   end
 
   @impl Phoenix.LiveView
   def handle_event("delete_trader", %{"id" => id}, socket) do
-    IO.inspect(id)
-    {:noreply, socket}
+    account = socket.assigns.active_account
+    trader = Enum.find(account.traders, fn t -> t.id == id end)
+
+    case Accounts.delete_trader(trader) do
+      {:ok, _trader} ->
+        {:noreply,
+         socket
+         |> default_assigns()
+         |> put_flash(:info, "Trader supprimé")
+         |> push_patch(to: ~p"/account/#{account.id}")}
+
+      {:error, _changeset} ->
+        {:noreply, socket |> put_flash(:error, "Erreur lors de la suppression du compte")}
+    end
   end
 
   defp default_assigns(socket) do
@@ -165,6 +214,6 @@ defmodule LandbuyerWeb.Live.Dashboard do
   end
 
   defp default_trader_changeset() do
-    Trader.changeset(%Trader{})
+    Trader.changeset(%Trader{}, %{"state" => :paused})
   end
 end
