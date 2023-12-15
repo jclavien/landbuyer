@@ -57,7 +57,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
             <.traders_list account={@active_account} />
           </div>
           <div class={[
-            "absolute top-0 bottom-0 w-96 transition-all",
+            "fixed top-14 bottom-14 w-96 transition-all",
             "border-l bg-gray-900 border-gray-700 shadow-xl",
             @show_form_trader && "right-0",
             not @show_form_trader && "-right-96"

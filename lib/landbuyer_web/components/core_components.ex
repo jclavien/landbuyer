@@ -255,7 +255,7 @@ defmodule LandbuyerWeb.CoreComponents do
     assigns = assign_new(assigns, :checked, fn -> input_equals?(assigns.value, "true") end)
 
     ~H"""
-    <label phx-feedback-for={@name} class="flex gap-4 items-center">
+    <label phx-feedback-for={@name} class="flex gap-4 items-center text-sm">
       <input type="hidden" name={@name} value="false" />
       <input
         type="checkbox"
@@ -280,7 +280,7 @@ defmodule LandbuyerWeb.CoreComponents do
         name={@name}
         class={[
           "mt-0.5 block w-full border-2 p-2 placeholder:text-gray-50",
-          "text-gray-900 bg-white focus:outline-none focus:ring-1",
+          "text-sm text-gray-900 bg-white focus:outline-none focus:ring-1",
           "phx-no-feedback:border-gray-100 phx-no-feedback:focus:border-gray-100",
           input_border(@errors)
         ]}
@@ -304,7 +304,7 @@ defmodule LandbuyerWeb.CoreComponents do
         name={@name}
         class={[
           "mt-0.5 block h-40 w-full border-2 p-2 placeholder:text-gray-50",
-          "text-gray-900 bg-white focus:outline-none focus:ring-1",
+          "text-sm text-gray-900 bg-white focus:outline-none focus:ring-1",
           "phx-no-feedback:border-gray-100 phx-no-feedback:focus:border-gray-100",
           input_border(@errors)
         ]}
@@ -327,7 +327,7 @@ defmodule LandbuyerWeb.CoreComponents do
         value={@value}
         class={[
           "mt-0.5 block w-full border-2 p-2 placeholder:text-gray-50",
-          "text-gray-900 bg-white focus:outline-none focus:ring-1",
+          "text-sm text-gray-900 bg-white focus:outline-none focus:ring-1",
           "phx-no-feedback:border-gray-100 phx-no-feedback:focus:border-gray-100",
           input_border(@errors)
         ]}
