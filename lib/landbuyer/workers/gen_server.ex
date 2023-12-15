@@ -8,15 +8,15 @@ defmodule Landbuyer.Workers.GenServer do
   end
 
   @impl true
-  def init(%State{account: account, trader: trader} = state) do
-    IO.puts("> Init GenServer #{"A#{account.id}/T#{trader.id}"}")
-    IO.puts("  Account:")
-    IO.inspect(account)
-    IO.puts("  Trader:")
-    IO.inspect(trader)
+  def init(%State{trader: trader} = state) do
+    # Precompute strategy module
+    strategy =
+      Landbuyer.Strategies.Strategies.all()
+      |> Enum.find(fn strategy -> strategy.key() == trader.strategy end)
 
-    Process.send_after(self(), :beat, trader.rate_ms)
+    state = %{state | data: Map.put(state.data, :strategy, strategy)}
 
+    Process.send_after(self(), :run_strategy, trader.rate_ms)
     {:ok, state}
   end
 
@@ -26,16 +26,15 @@ defmodule Landbuyer.Workers.GenServer do
   end
 
   @impl true
-  def handle_info(:beat, %State{account: account, trader: trader} = state) do
-    IO.puts("> Beat GenServer #{"A#{account.id}/T#{trader.id}"}")
+  def handle_info(:run_strategy, %State{account: account, trader: trader, data: %{strategy: strategy}} = state) do
+    strategy.run(account, trader)
 
-    Process.send_after(self(), :beat, trader.rate_ms)
+    Process.send_after(self(), :run_strategy, trader.rate_ms)
     {:noreply, state}
   end
 
   @impl true
-  def terminate(_reason, %State{account: account, trader: trader}) do
-    IO.puts("> Kill GenServer #{"A#{account.id}/T#{trader.id}"} (from GenServer)")
+  def terminate(_reason, _state) do
     :ok
   end
 end

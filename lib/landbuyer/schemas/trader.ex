@@ -11,7 +11,7 @@ defmodule Landbuyer.Schemas.Trader do
   alias Landbuyer.Schemas.TraderOptions
 
   @states [:paused, :active]
-  @strategies [:default, :test]
+  @strategies [Landbuyer.Strategies.Empty]
 
   @type t() :: %Trader{
           id: integer() | nil,
@@ -23,7 +23,7 @@ defmodule Landbuyer.Schemas.Trader do
         }
   schema("traders") do
     field(:state, Ecto.Enum, values: @states)
-    field(:strategy, Ecto.Enum, values: @strategies)
+    field(:strategy, Ecto.Enum, values: Enum.map(@strategies, fn strat -> strat.key() end))
     field(:rate_ms, :integer)
     embeds_one(:instrument, Instrument, on_replace: :update)
     embeds_one(:options, TraderOptions, on_replace: :update)
@@ -38,13 +38,13 @@ defmodule Landbuyer.Schemas.Trader do
     |> cast(params, [:state, :strategy, :rate_ms])
     |> validate_required([:state, :strategy, :rate_ms])
     |> validate_inclusion(:state, @states)
-    |> validate_inclusion(:strategy, @strategies)
+    |> validate_inclusion(:strategy, Enum.map(@strategies, fn strat -> strat.key() end))
     |> cast_embed(:instrument, with: &Instrument.changeset/2)
     |> cast_embed(:options, with: &TraderOptions.changeset/2)
   end
 
   @spec strategies() :: Keyword.t()
   def strategies() do
-    ["Par défaut": :default, Test: :test]
+    Enum.map(@strategies, fn strat -> {strat.name(), strat.key()} end)
   end
 end
