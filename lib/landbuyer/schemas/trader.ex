@@ -11,7 +11,10 @@ defmodule Landbuyer.Schemas.Trader do
   alias Landbuyer.Schemas.TraderOptions
 
   @states [:paused, :active]
-  @strategies [Landbuyer.Strategies.Empty]
+  @strategies [
+    Landbuyer.Strategies.Empty,
+    Landbuyer.Strategies.LandbuyerOrigin
+  ]
 
   @type t() :: %Trader{
           id: integer() | nil,

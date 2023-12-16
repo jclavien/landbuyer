@@ -27,7 +27,10 @@ defmodule Landbuyer.Workers.GenServer do
 
   @impl true
   def handle_info(:run_strategy, %State{account: account, trader: trader, data: %{strategy: strategy}} = state) do
-    strategy.run(account, trader)
+    resp = strategy.run(account, trader)
+
+    # TODO: Record resp in database
+    IO.inspect(resp)
 
     Process.send_after(self(), :run_strategy, trader.rate_ms)
     {:noreply, state}
