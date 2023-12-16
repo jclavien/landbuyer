@@ -30,7 +30,7 @@ defmodule Landbuyer.Workers.GenServer do
     resp = strategy.run(account, trader)
 
     # TODO: Record resp in database
-    IO.inspect(resp)
+    IO.puts("A#{account.id}T#{trader.id} > #{inspect(resp)}")
 
     Process.send_after(self(), :run_strategy, trader.rate_ms)
     {:noreply, state}

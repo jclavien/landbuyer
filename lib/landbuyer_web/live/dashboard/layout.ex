@@ -19,6 +19,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Layout do
   attr(:flash, :map, required: true)
   attr(:account_count, :integer, required: true)
   attr(:trader_count, :integer, required: true)
+  attr(:active_trader_count, :integer, required: true)
 
   def layout_footer(assigns) do
     ~H"""
@@ -29,6 +30,9 @@ defmodule LandbuyerWeb.Live.Dashboard.Layout do
         </span>
         <span>
           <strong><%= @trader_count %></strong> traders
+        </span>
+        <span :if={@active_trader_count > 0} class="text-green">
+          <strong><%= @active_trader_count %></strong> traders actifs
         </span>
       </div>
 

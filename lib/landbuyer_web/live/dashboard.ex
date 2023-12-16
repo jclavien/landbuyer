@@ -68,7 +68,12 @@ defmodule LandbuyerWeb.Live.Dashboard do
         </div>
       </div>
 
-      <.layout_footer flash={@flash} account_count={@account_count} trader_count={@trader_count} />
+      <.layout_footer
+        flash={@flash}
+        account_count={@account_count}
+        trader_count={@trader_count}
+        active_trader_count={@active_trader_count}
+      />
     </div>
     """
   end
@@ -233,10 +238,16 @@ defmodule LandbuyerWeb.Live.Dashboard do
     account_count = length(accounts)
     trader_count = Enum.reduce(accounts, 0, fn a, sum -> sum + length(a.traders) end)
 
+    active_trader_count =
+      Enum.reduce(accounts, 0, fn a, sum ->
+        (a.traders |> Enum.filter(fn t -> t.state == :active end) |> length()) + sum
+      end)
+
     socket
     |> assign(accounts: accounts)
     |> assign(account_count: account_count)
     |> assign(trader_count: trader_count)
+    |> assign(active_trader_count: active_trader_count)
   end
 
   defp set_active_account(socket, account_id) when is_binary(account_id) do
