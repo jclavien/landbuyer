@@ -1,5 +1,7 @@
 defmodule Landbuyer.Accounts do
-  @moduledoc false
+  @moduledoc """
+  This module contains all the logic related to the accounts.
+  """
 
   import Ecto.Query
 

@@ -158,7 +158,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
     ~H"""
     <div class="grid grid-cols-5 p-4 border-b border-gray-700">
       <.label_value label="Stratégie" value={@trader.strategy} />
-      <.label_value label="Intervale" value={@trader.rate_ms} unit="ms" />
+      <.label_value label="Intervale" value={Landbuyer.Format.integer(@trader.rate_ms)} unit="ms" />
       <.label_value
         label="Instrument"
         value={@trader.instrument.currency_pair}
