@@ -92,7 +92,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
       socket
       |> assign(show_form_trader: not socket.assigns.show_form_trader)
       |> assign(trader_edit: true)
-      |> assign(trader_changeset: Trader.changeset(trader, %{}))
+      |> assign(trader_changeset: default_trader_changeset(trader))
 
     {:noreply, socket}
   end
@@ -103,6 +103,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
       socket
       |> assign(show_form_trader: not socket.assigns.show_form_trader)
       |> assign(trader_edit: false)
+      |> assign(trader_changeset: default_trader_changeset())
 
     {:noreply, socket}
   end
@@ -263,7 +264,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
     Account.changeset(%Account{}, %{})
   end
 
-  defp default_trader_changeset() do
-    Trader.changeset(%Trader{}, %{"state" => :paused})
+  defp default_trader_changeset(trader \\ %Trader{}) do
+    Trader.changeset(trader, %{"state" => :paused})
   end
 end

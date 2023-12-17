@@ -39,9 +39,10 @@ defmodule Landbuyer.Schemas.Trader do
   def changeset(trader, params \\ %{}) do
     trader
     |> cast(params, [:state, :strategy, :rate_ms])
-    |> validate_required([:state, :strategy, :rate_ms])
-    |> validate_inclusion(:state, @states)
-    |> validate_inclusion(:strategy, Enum.map(@strategies, fn strat -> strat.key() end))
+    |> validate_required([:state, :strategy, :rate_ms], message: "Champ requis")
+    |> validate_inclusion(:state, @states, message: "Valeur invalide")
+    |> validate_inclusion(:strategy, Enum.map(@strategies, fn strat -> strat.key() end), message: "Valeur invalide")
+    |> validate_number(:rate_ms, greater_than_or_equal_to: 200, message: "Valeur invalide (> 200)")
     |> cast_embed(:instrument, with: &Instrument.changeset/2)
     |> cast_embed(:options, with: &TraderOptions.changeset/2)
   end
@@ -49,5 +50,10 @@ defmodule Landbuyer.Schemas.Trader do
   @spec strategies() :: Keyword.t()
   def strategies() do
     Enum.map(@strategies, fn strat -> {strat.name(), strat.key()} end)
+  end
+
+  @spec strategy_name(atom()) :: String.t()
+  def strategy_name(strategy) do
+    Enum.find(@strategies, fn strat -> strat.key() == strategy end).name()
   end
 end

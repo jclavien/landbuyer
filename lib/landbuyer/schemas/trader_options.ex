@@ -34,6 +34,6 @@ defmodule Landbuyer.Schemas.TraderOptions do
   def changeset(trader_options, params \\ %{}) do
     trader_options
     |> cast(params, @fields)
-    |> validate_required(@fields)
+    |> validate_required(@fields, message: "Champ requis")
   end
 end

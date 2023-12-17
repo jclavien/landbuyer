@@ -44,7 +44,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
       <.input :if={@edit} type="hidden" field={{f, :id}} />
       <.input type="hidden" field={{f, :state}} />
       <.input type="select" field={{f, :strategy}} options={Trader.strategies()} label="Stratégie" />
-      <.input field={{f, :rate_ms}} label="Intervale (en millisecondes)" placeholder="ex. 1000" />
+      <.input field={{f, :rate_ms}} label="Interval (en millisecondes)" placeholder="ex. 1000" />
 
       <h3>Instrument</h3>
       <.inputs_for :let={f_instrument} field={f[:instrument]}>
@@ -60,7 +60,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
           <.input field={{f_options, :distance_on_take_profit}} label="Take profit" placeholder="ex. 0.001" />
           <.input field={{f_options, :distance_on_stop_loss}} label="Stop loss" placeholder="ex. 0.01" />
           <.input field={{f_options, :distance_between_position}} label="Dist. entre positions" placeholder="ex. 0.01" />
-          <.input field={{f_options, :position_amount}} label="Montant position" placeholder="ex. 20" />
+          <.input field={{f_options, :position_amount}} label="Montant positions" placeholder="ex. 20" />
           <.input field={{f_options, :max_order}} label="Maximum d'ordres" placeholder="ex. 10" />
         </div>
       </.inputs_for>
@@ -157,8 +157,8 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
   defp options(assigns) do
     ~H"""
     <div class="grid grid-cols-5 p-4 border-b border-gray-700">
-      <.label_value label="Stratégie" value={@trader.strategy} />
-      <.label_value label="Intervale" value={Landbuyer.Format.integer(@trader.rate_ms)} unit="ms" />
+      <.label_value label="Stratégie" value={Trader.strategy_name(@trader.strategy)} />
+      <.label_value label="Interval" value={Landbuyer.Format.integer(@trader.rate_ms)} unit="ms" />
       <.label_value
         label="Instrument"
         value={@trader.instrument.currency_pair}
@@ -169,8 +169,8 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
     <div class="grid grid-cols-5 p-4 border-b border-gray-700">
       <.label_value label="Take profit" value={@trader.options.distance_on_take_profit} unit="pips" />
       <.label_value label="Stop loss" value={@trader.options.distance_on_stop_loss} unit="pips" />
-      <.label_value label="Distance entre positions" value={@trader.options.distance_between_position} unit="pips" />
-      <.label_value label="Montant de la position" value={@trader.options.position_amount} unit="unités" />
+      <.label_value label="Dist. entre positions" value={@trader.options.distance_between_position} unit="pips" />
+      <.label_value label="Montant des positions" value={@trader.options.position_amount} unit="unités" />
       <.label_value label="Maximum d'ordres" value={@trader.options.max_order} unit="x2" />
     </div>
     """
