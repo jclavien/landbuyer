@@ -14,32 +14,55 @@ defmodule Landbuyer.Workers.GenServer do
       Landbuyer.Strategies.Strategies.all()
       |> Enum.find(fn strategy -> strategy.key() == trader.strategy end)
 
-    state = %{state | data: Map.put(state.data, :strategy, strategy)}
+    # Set working data for the task
+    data =
+      state.data
+      |> Map.put(:strategy, strategy)
+      |> Map.put(:counter, 0)
 
-    Process.send_after(self(), :run_strategy, trader.rate_ms)
+    state = %{state | data: data}
+
+    # Start the task
+    Process.send_after(self(), :run_strategy, 0)
     {:ok, state}
   end
 
   @impl true
-  def handle_call(:stop, _from, state) do
-    {:stop, :normal, :ok, state}
-  end
-
-  @impl true
-  def handle_info(:run_strategy, %State{account: account, trader: trader, data: %{strategy: strategy}} = state) do
-    resp = strategy.run(account, trader)
-
-    # TODO: Record resp in database
-    account_id = String.pad_leading("#{account.id}", 3, "0")
-    trader_id = String.pad_leading("#{trader.id}", 3, "0")
-    IO.puts("A#{account_id}T#{trader_id} > #{inspect(resp)}")
-
+  def handle_info(:run_strategy, %State{trader: trader} = state) do
+    state = run_task(state)
     Process.send_after(self(), :run_strategy, trader.rate_ms)
     {:noreply, state}
   end
 
   @impl true
+  def handle_call(:stop, _from, %State{account: account, trader: trader, data: %{counter: counter}} = state) do
+    IO.puts("#{format_ids(account.id, trader.id)} | End of task after #{counter} iterations")
+    {:stop, :normal, :ok, state}
+  end
+
+  @impl true
   def terminate(_reason, _state) do
     :ok
+  end
+
+  defp run_task(%State{account: account, trader: trader, data: %{strategy: strategy, counter: counter}} = state) do
+    # Run the strategy
+    start = :os.system_time(:millisecond)
+    resp = strategy.run(account, trader)
+    stop = :os.system_time(:millisecond)
+
+    # TODO: Record resp in database
+    # Print temporary the response
+    duration = String.pad_leading("#{stop - start}", 4, " ")
+    IO.puts("#{format_ids(account.id, trader.id)} | #{duration}ms | #{inspect(resp)}")
+
+    # Increment counter
+    %{state | data: %{state.data | counter: counter + 1}}
+  end
+
+  defp format_ids(account_id, trader_id) do
+    account_id = String.pad_trailing("#{account_id}", 3, " ")
+    trader_id = String.pad_trailing("#{trader_id}", 3, " ")
+    "A#{account_id}T#{trader_id}"
   end
 end

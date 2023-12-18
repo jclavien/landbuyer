@@ -12,9 +12,7 @@ defmodule Landbuyer.Strategies.Strategies do
 
   @doc "TODO"
   @callback run(Account.t(), Trader.t()) ::
-              {:event, atom(), map()}
-              | {:no_event, atom(), map()}
-              | {:error, atom(), map()}
+              [{:event, atom(), map()} | {:no_event, atom(), map()} | {:error, atom(), map()}]
 
   @spec all() :: [atom()]
   def all() do

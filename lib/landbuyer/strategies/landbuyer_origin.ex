@@ -12,14 +12,14 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
   @spec name() :: String.t()
   def name(), do: "Landbuyer Origin"
 
-  @spec run(Account.t(), Trader.t()) :: {:event, atom(), map()} | {:no_event, atom(), map()} | {:error, atom(), map()}
+  @spec run(Account.t(), Trader.t()) ::
+          [{:event, atom(), map()} | {:no_event, atom(), map()} | {:error, atom(), map()}]
   def run(account_opts, trader_opts) do
     with {:ok, account} <- get_account(account_opts, trader_opts),
          {:ok} <- have_pending_order(account),
          {:ok, orders_price} <- compute_orders(trader_opts),
-         {:ok, orders_struct} <- create_orders(orders_price, trader_opts),
-         {return_status, message, data} <- post_orders(orders_struct, account_opts, trader_opts) do
-      {return_status, message, data}
+         {:ok, orders_struct} <- create_orders(orders_price, trader_opts) do
+      post_orders(orders_struct, account_opts, trader_opts)
     else
       response -> response
     end
@@ -37,24 +37,23 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
          {:ok, %{"account" => account}} <- Poison.decode(body) do
       {:ok, account}
     else
-      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
-        # Register only usefull info for "body"
-        {:error, :wrong_http_code, %{"status_code" => code, "body" => body}}
+      {:ok, %HTTPoison.Response{status_code: code}} ->
+        [{:error, :wrong_http_code, %{"status_code" => code}}]
 
       {:ok, http_response} ->
-        # Register only usefull info for "http_response"
-        {:error, :bad_http_response, Map.from_struct(http_response)}
+        [{:error, :bad_http_response, Map.from_struct(http_response)}]
 
       {:error, poison_error} ->
-        # Register only usefull info for "poison_error"
-        {:error, :poison_error, Map.from_struct(poison_error)}
+        [{:error, :poison_error, Map.from_struct(poison_error)}]
     end
   end
 
-  defp have_pending_order(account_opts) do
-    if account_opts["pendingOrderCount"] > 0,
+  defp have_pending_order(_account_opts) do
+    # if account_opts["pendingOrderCount"] > 0,
+
+    if Enum.random(1..4) == 1,
       do: {:ok},
-      else: {:no_event, :no_pending_orders, %{}}
+      else: [{:no_event, :no_pending_orders, %{}}]
   end
 
   defp compute_orders(_trader_opts) do
@@ -71,7 +70,13 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     _low_trade_value = 0
 
     # compute order to be placer
-    orders_to_place = if Enum.random(1..2) == 1, do: [], else: [5.0]
+    orders_to_place =
+      case Enum.random(1..3) do
+        1 -> []
+        2 -> [5.0]
+        3 -> [5.0, 10.0, 15.0, 20.0, 25.0, 30.0]
+      end
+
     # take_profit_to_place = [] (see what's the use)
     # - on rempli un tableau avec les niveau de prix des ordres que l'on devrait ouvrir
     # - idem pour les ordres inférieurs
@@ -81,7 +86,7 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
   end
 
   defp create_orders([], _trader_opts) do
-    {:no_event, :no_orders_to_place, %{}}
+    [{:no_event, :no_orders_to_place, %{}}]
   end
 
   defp create_orders(orders_to_place, trader_opts) do
@@ -91,12 +96,12 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
           type: "MARKET_IF_TOUCHED",
           instrument: trader_opts.instrument.currency_pair,
           units: trader_opts.options.position_amount,
-          price: Integer.to_string(order),
+          price: Float.to_string(order),
           timeInForce: "GTC",
           takeProfitOnFill: %{
             timeInForce: "GTC",
             # TODO: round to given precision
-            price: Integer.to_string(order + trader_opts.options.distance_on_take_profit)
+            price: Float.to_string(order + trader_opts.options.distance_on_take_profit)
           }
         }
       end)
@@ -105,52 +110,46 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
   end
 
   defp post_orders(orders, account_opts, trader_opts) do
-    # TODO: use Task.async_stream
-    %{ok: valid_requests, errors: failed_requests} =
-      orders
-      |> Enum.map(fn order -> do_post_orders(order, account_opts, trader_opts) end)
-      |> Enum.group_by(
-        fn tuple -> elem(tuple, 0) end,
-        fn x -> x end
-      )
-
-    data = %{
-      valid_requests: valid_requests,
-      valid_requests_count: length(valid_requests),
-      failed_requests: failed_requests,
-      failed_requests_count: length(failed_requests)
-    }
-
-    cond do
-      failed_requests == [] -> {:event, :all_orders_placed, data}
-      valid_requests == [] -> {:error, :all_orders_failed, data}
-      true -> {:error, :some_orders_placed, data}
-    end
+    orders
+    |> Task.async_stream(
+      fn order -> do_post_orders(order, account_opts, trader_opts) end,
+      timeout: trader_opts.rate_ms,
+      on_timeout: :kill_task,
+      zip_input_on_exit: true
+    )
+    |> Enum.map(fn
+      {:ok, response} -> response
+      {:exit, {{:ok, _response}, reason}} -> {:error, :task_error, %{reason: reason}}
+    end)
   end
 
   defp do_post_orders(order, account_opts, trader_opts) do
     request = %HTTPoison.Request{
       method: :post,
       url: "https://#{account_opts.hostname}/v3/accounts/#{account_opts.oanda_id}/orders",
-      headers: [{"Authorization", "Bearer #{account_opts.token}"}],
+      headers: [
+        {"Authorization", "Bearer #{account_opts.token}"},
+        {"Content-Type", "application/json"}
+      ],
       options: [timeout: trader_opts.rate_ms],
-      body: %{"order" => order}
+      body: Poison.encode!(%{"order" => order})
     }
 
     case HTTPoison.request(request) do
-      {:ok, %HTTPoison.Response{status_code: 201, headers: [_location, request_id]}} ->
-        {:ok, request_id}
+      {:ok, %HTTPoison.Response{status_code: 201, headers: headers}} ->
+        {_, request_id} = Enum.find(headers, fn {key, _value} -> key == "RequestID" end)
+        {:event, :order_placed, %{request_id: String.to_integer(request_id)}}
 
-      {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
-        # Register only usefull info for "body"
-        {:error, :order_specification_invalid, %{"status_code" => 400, "body" => body}}
+      {:ok, %HTTPoison.Response{status_code: 400}} ->
+        {:error, :order_specification_invalid, %{"status_code" => 400}}
 
-      {:ok, %HTTPoison.Response{status_code: 404, body: body}} ->
-        # Register only usefull info for "body"
-        {:error, :order_or_account_unknown, %{"status_code" => 404, "body" => body}}
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, :order_or_account_unknown, %{"status_code" => 404}}
+
+      {:ok, %HTTPoison.Response{status_code: code}} ->
+        {:error, :bad_http_response, %{"status_code" => code}}
 
       {:error, poison_error} ->
-        # Register only usefull info for "poison_error"
         {:error, :poison_error, Map.from_struct(poison_error)}
     end
   end
