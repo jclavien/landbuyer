@@ -16,16 +16,16 @@ defmodule Landbuyer.Schemas.TraderOptions do
   ]
 
   @type t() :: %TraderOptions{
-          distance_on_take_profit: float() | nil,
-          distance_between_position: float() | nil,
-          distance_on_stop_loss: float() | nil,
+          distance_on_take_profit: integer() | nil,
+          distance_between_position: integer() | nil,
+          distance_on_stop_loss: integer() | nil,
           position_amount: integer() | nil,
           max_order: integer() | nil
         }
   embedded_schema do
-    field(:distance_on_take_profit, :float)
-    field(:distance_between_position, :float)
-    field(:distance_on_stop_loss, :float)
+    field(:distance_on_take_profit, :integer)
+    field(:distance_between_position, :integer)
+    field(:distance_on_stop_loss, :integer)
     field(:position_amount, :integer)
     field(:max_order, :integer)
   end

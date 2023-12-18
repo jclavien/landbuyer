@@ -57,9 +57,9 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
       <h3>Options</h3>
       <.inputs_for :let={f_options} field={f[:options]}>
         <div class="grid grid-cols-2 gap-x-4">
-          <.input field={{f_options, :distance_on_take_profit}} label="Take profit" placeholder="ex. 0.001" />
-          <.input field={{f_options, :distance_on_stop_loss}} label="Stop loss" placeholder="ex. 0.01" />
-          <.input field={{f_options, :distance_between_position}} label="Dist. entre positions" placeholder="ex. 0.01" />
+          <.input field={{f_options, :distance_on_take_profit}} label="Take profit" placeholder="ex. 10" />
+          <.input field={{f_options, :distance_on_stop_loss}} label="Stop loss" placeholder="ex. 20" />
+          <.input field={{f_options, :distance_between_position}} label="Dist. entre positions" placeholder="ex. 1" />
           <.input field={{f_options, :position_amount}} label="Montant positions" placeholder="ex. 20" />
           <.input field={{f_options, :max_order}} label="Maximum d'ordres" placeholder="ex. 10" />
         </div>
