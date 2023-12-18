@@ -15,27 +15,29 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
 
   @spec run(Account.t(), Trader.t()) :: Strategies.events()
   def run(account_opts, trader_opts) do
-    with {:ok, account} <- get_account(account_opts, trader_opts),
-         {:ok} <- have_pending_order(account),
-         {:ok, orders_price} <- compute_orders(trader_opts),
-         {:ok, orders_struct} <- create_orders(orders_price, trader_opts) do
-      post_orders(orders_struct, account_opts, trader_opts)
+    with {:ok, orders} <- get_open_orders(account_opts, trader_opts),
+         {:ok, low_trade, high_trade} <- compute_trade_value(orders, account_opts, trader_opts),
+         {:ok, orders_to_place} <- compute_orders(orders, low_trade, high_trade, trader_opts),
+         response <- post_orders(orders_to_place, account_opts, trader_opts) do
+      response
     else
       response -> response
     end
   end
 
-  defp get_account(account_opts, trader_opts) do
+  defp get_open_orders(account_opts, trader_opts) do
+    baseurl = "https://#{account_opts.hostname}/v3/accounts/#{account_opts.oanda_id}"
+
     request = %HTTPoison.Request{
       method: :get,
-      url: "https://#{account_opts.hostname}/v3/accounts/#{account_opts.oanda_id}",
+      url: "#{baseurl}/orders?state=PENDING&instrument=#{trader_opts.instrument.currency_pair}&count=500",
       headers: [{"Authorization", "Bearer #{account_opts.token}"}],
       options: [timeout: trader_opts.rate_ms]
     }
 
     with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.request(request),
-         {:ok, %{"account" => account}} <- Poison.decode(body) do
-      {:ok, account}
+         {:ok, %{"orders" => orders}} <- Poison.decode(body) do
+      {:ok, orders}
     else
       {:ok, %HTTPoison.Response{status_code: code}} ->
         [{:error, :wrong_http_code, %{"status_code" => code}}]
@@ -48,71 +50,106 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end
   end
 
-  defp have_pending_order(_account_opts) do
-    # if account_opts["pendingOrderCount"] > 0,
+  defp compute_trade_value([], account_opts, trader_opts) do
+    baseurl = "https://#{account_opts.hostname}/v3/accounts/#{account_opts.oanda_id}"
 
-    if Enum.random(1..4) == 1,
-      do: {:ok},
-      else: [{:no_event, :no_pending_orders, %{}}]
+    request = %HTTPoison.Request{
+      method: :get,
+      url: "#{baseurl}/pricing?instruments=#{trader_opts.instrument.currency_pair}",
+      headers: [{"Authorization", "Bearer #{account_opts.token}"}],
+      options: [timeout: trader_opts.rate_ms]
+    }
+
+    with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.request(request),
+         {:ok, %{"prices" => prices}} <- Poison.decode(body) do
+      %{"closeoutAsk" => price} = hd(prices)
+      {:ok, format_float(price, trader_opts), format_float(price, trader_opts)}
+    else
+      {:ok, %HTTPoison.Response{status_code: code}} ->
+        [{:error, :wrong_http_code, %{"status_code" => code}}]
+
+      {:ok, http_response} ->
+        [{:error, :bad_http_response, Map.from_struct(http_response)}]
+
+      {:error, poison_error} ->
+        [{:error, :poison_error, Map.from_struct(poison_error)}]
+    end
   end
 
-  defp compute_orders(_trader_opts) do
-    # get trade orders
-    # sort trade orders
-    _trade_orders = []
+  defp compute_trade_value(orders, _account_opts, %{instrument: instr, options: options} = trader_opts) do
+    orders = Enum.filter(orders, fn %{"type" => type} -> type == "TAKE_PROFIT" end)
 
-    # get limit orders
-    # sort limit orders
-    _limit_orders = []
+    if length(orders) > 0 do
+      price_divider = :math.pow(10, instr.round_decimal)
 
-    # compute high and low prices
-    _high_trade_value = 0
-    _low_trade_value = 0
+      %{"price" => low_trade} = Enum.min_by(orders, fn %{"price" => price} -> String.to_float(price) end)
+      %{"price" => high_trade} = Enum.max_by(orders, fn %{"price" => price} -> String.to_float(price) end)
 
-    # compute order to be placer
+      low_trade = format_float(low_trade, trader_opts) - options.distance_on_take_profit / price_divider
+      high_trade = format_float(high_trade, trader_opts) - options.distance_on_take_profit / price_divider
+
+      {:ok, low_trade, high_trade}
+    else
+      [{:no_event, :waiting_for_first_executed_order, %{}}]
+    end
+  end
+
+  defp compute_orders(orders, low_trade, high_trade, %{instrument: instr, options: options} = trader_opts) do
+    price_divider = :math.pow(10, instr.round_decimal)
+    order_range = (options.max_order + 1) * options.distance_between_position / price_divider
+    high_limit = high_trade + order_range
+    low_limit = low_trade - order_range
+
+    # We don't use order to remove for now
+    {_orders_to_remove, orders_to_keep} =
+      orders
+      |> Enum.filter(fn %{"type" => type} -> type == "MARKET_IF_TOUCHED" end)
+      |> Enum.split_with(fn %{"price" => price} ->
+        format_float(price, trader_opts) > high_limit || format_float(price, trader_opts) < low_limit
+      end)
+
+    orders_to_keep = Enum.map(orders_to_keep, fn %{"price" => price} -> format_float(price, trader_opts) end)
+
     orders_to_place =
-      case Enum.random(1..3) do
-        1 -> []
-        2 -> [5.0]
-        3 -> [5.0, 10.0, 15.0, 20.0, 25.0, 30.0]
-      end
+      1..options.max_order
+      |> Enum.map(fn i ->
+        [
+          format_float(low_trade - i * options.distance_between_position / price_divider, trader_opts),
+          format_float(i * options.distance_between_position / price_divider + high_trade, trader_opts)
+        ]
+      end)
+      |> List.flatten()
+      |> Enum.filter(fn price ->
+        not Enum.any?(orders_to_keep, fn order_price -> order_price == price end)
+      end)
+      |> Enum.map(fn price ->
+        tp_price = format_float_to_string(price + options.distance_on_take_profit / price_divider, trader_opts)
+        price = format_float_to_string(price, trader_opts)
 
-    # take_profit_to_place = [] (see what's the use)
-    # - on rempli un tableau avec les niveau de prix des ordres que l'on devrait ouvrir
-    # - idem pour les ordres inférieurs
-    # - sort orders
-
-    {:ok, orders_to_place}
-  end
-
-  defp create_orders([], _trader_opts) do
-    [{:no_event, :no_orders_to_place, %{}}]
-  end
-
-  defp create_orders(orders_to_place, trader_opts) do
-    orders =
-      Enum.map(orders_to_place, fn order ->
         %{
           type: "MARKET_IF_TOUCHED",
-          instrument: trader_opts.instrument.currency_pair,
-          units: trader_opts.options.position_amount,
-          price: Float.to_string(order),
-          timeInForce: "GTC",
+          instrument: instr.currency_pair,
+          units: options.position_amount,
+          price: price,
+          timeInForce: "GFD",
           takeProfitOnFill: %{
             timeInForce: "GTC",
-            # TODO: round to given precision
-            price: Float.to_string(order + trader_opts.options.distance_on_take_profit)
+            price: tp_price
           }
         }
       end)
 
-    {:ok, orders}
+    {:ok, orders_to_place}
+  end
+
+  defp post_orders([], _account_opts, _trader_opts) do
+    [{:no_event, :no_orders_to_place, %{}}]
   end
 
   defp post_orders(orders, account_opts, trader_opts) do
     orders
     |> Task.async_stream(
-      fn order -> do_post_orders(order, account_opts, trader_opts) end,
+      fn order -> post_order(order, account_opts, trader_opts) end,
       timeout: trader_opts.rate_ms,
       on_timeout: :kill_task,
       zip_input_on_exit: true
@@ -123,7 +160,7 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end)
   end
 
-  defp do_post_orders(order, account_opts, trader_opts) do
+  defp post_order(order, account_opts, trader_opts) do
     request = %HTTPoison.Request{
       method: :post,
       url: "https://#{account_opts.hostname}/v3/accounts/#{account_opts.oanda_id}/orders",
@@ -140,17 +177,30 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
         {_, request_id} = Enum.find(headers, fn {key, _value} -> key == "RequestID" end)
         {:event, :order_placed, %{request_id: String.to_integer(request_id)}}
 
-      {:ok, %HTTPoison.Response{status_code: 400}} ->
-        {:error, :order_specification_invalid, %{"status_code" => 400}}
-
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        {:error, :order_or_account_unknown, %{"status_code" => 404}}
-
       {:ok, %HTTPoison.Response{status_code: code}} ->
         {:error, :bad_http_response, %{"status_code" => code}}
 
       {:error, poison_error} ->
         {:error, :poison_error, Map.from_struct(poison_error)}
     end
+  end
+
+  # Helpers
+
+  defp format_float(price, trader_opts) when is_binary(price) do
+    price
+    |> String.to_float()
+    |> Float.round(trader_opts.instrument.round_decimal)
+  end
+
+  defp format_float(price, trader_opts) do
+    Float.round(price, trader_opts.instrument.round_decimal)
+  end
+
+  defp format_float_to_string(price, trader_opts) do
+    price
+    |> format_float(trader_opts)
+    |> Float.to_string()
+    |> String.slice(0..(2 + trader_opts.instrument.round_decimal))
   end
 end
