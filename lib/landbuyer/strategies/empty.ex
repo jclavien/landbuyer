@@ -3,8 +3,9 @@ defmodule Landbuyer.Strategies.Empty do
 
   alias Landbuyer.Schemas.Account
   alias Landbuyer.Schemas.Trader
+  alias Landbuyer.Strategies.Strategies
 
-  @behaviour Landbuyer.Strategies.Strategies
+  @behaviour Strategies
 
   @spec key() :: atom()
   def key(), do: :empty
@@ -12,8 +13,7 @@ defmodule Landbuyer.Strategies.Empty do
   @spec name() :: String.t()
   def name(), do: "Vide"
 
-  @spec run(Account.t(), Trader.t()) ::
-          [{:event, atom(), map()} | {:no_event, atom(), map()} | {:error, atom(), map()}]
+  @spec run(Account.t(), Trader.t()) :: Strategies.events()
   def run(_account, _trader) do
     [{:no_event, :empty_strategy, %{}}]
   end

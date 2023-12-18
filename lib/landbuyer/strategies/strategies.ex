@@ -4,6 +4,11 @@ defmodule Landbuyer.Strategies.Strategies do
   alias Landbuyer.Schemas.Account
   alias Landbuyer.Schemas.Trader
 
+  @type event() :: {:event, atom(), map()}
+  @type no_event() :: {:no_event, atom(), map()}
+  @type error() :: {:error, atom(), map()}
+  @type events() :: [event() | no_event() | error()]
+
   @doc "TODO"
   @callback key() :: atom()
 

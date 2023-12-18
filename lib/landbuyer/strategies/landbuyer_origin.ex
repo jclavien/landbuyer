@@ -3,8 +3,9 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
 
   alias Landbuyer.Schemas.Account
   alias Landbuyer.Schemas.Trader
+  alias Landbuyer.Strategies.Strategies
 
-  @behaviour Landbuyer.Strategies.Strategies
+  @behaviour Strategies
 
   @spec key() :: atom()
   def key(), do: :landbuyer_origin
@@ -12,8 +13,7 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
   @spec name() :: String.t()
   def name(), do: "Landbuyer Origin"
 
-  @spec run(Account.t(), Trader.t()) ::
-          [{:event, atom(), map()} | {:no_event, atom(), map()} | {:error, atom(), map()}]
+  @spec run(Account.t(), Trader.t()) :: Strategies.events()
   def run(account_opts, trader_opts) do
     with {:ok, account} <- get_account(account_opts, trader_opts),
          {:ok} <- have_pending_order(account),
