@@ -9,13 +9,19 @@ defmodule Landbuyer.Strategies.Strategies do
   @type error() :: {:error, atom(), map()}
   @type events() :: [event() | no_event() | error()]
 
-  @doc "TODO"
+  @doc """
+  Get the key of the strategy (used internally and in the database)
+  """
   @callback key() :: atom()
 
-  @doc "TODO"
+  @doc """
+  Get the name of the strategy (used in the UI)
+  """
   @callback name() :: String.t()
 
-  @doc "TODO"
+  @doc """
+  Run the strategy
+  """
   @callback run(Account.t(), Trader.t()) :: events()
 
   @spec all() :: [atom()]
