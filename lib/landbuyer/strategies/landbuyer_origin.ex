@@ -25,6 +25,7 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end
   end
 
+  # Get all open orders for the given account and for the given instrument.
   defp get_open_orders(account_opts, trader_opts) do
     baseurl = "https://#{account_opts.hostname}/v3/accounts/#{account_opts.oanda_id}"
 
@@ -50,6 +51,8 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end
   end
 
+  # If there is no open order, we get the current market price.
+  # We set low_trade and high_trade values to the current price.
   defp compute_trade_value([], account_opts, trader_opts) do
     baseurl = "https://#{account_opts.hostname}/v3/accounts/#{account_opts.oanda_id}"
 
@@ -76,6 +79,7 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end
   end
 
+  # If there is open orders, we find the lowest and highest price of the orders from the orders.
   defp compute_trade_value(orders, _account_opts, %{instrument: instr, options: options} = trader_opts) do
     orders = Enum.filter(orders, fn %{"type" => type} -> type == "TAKE_PROFIT" end)
 
