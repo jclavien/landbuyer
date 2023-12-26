@@ -15,6 +15,6 @@ defmodule Landbuyer.Strategies.Empty do
 
   @spec run(Account.t(), Trader.t()) :: Strategies.events()
   def run(_account, _trader) do
-    [{:no_event, :empty_strategy, %{}}]
+    [{:nothing, :empty_strategy, %{}}]
   end
 end
