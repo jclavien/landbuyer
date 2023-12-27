@@ -1,5 +1,10 @@
 defmodule Landbuyer.Strategies.Empty do
-  @moduledoc false
+  @moduledoc """
+  Empty strategy.
+
+  This strategy does nothing and may be used as a template for new strategies or as a test strategy
+  for gen_server and supervisor behaviours.
+  """
 
   alias Landbuyer.Schemas.Account
   alias Landbuyer.Schemas.Trader

@@ -1,5 +1,20 @@
 defmodule Landbuyer.Strategies.LandbuyerOrigin do
-  @moduledoc false
+  @moduledoc """
+  Landbuyer Origin strategy.
+
+  1. Get all orders with state PENDING for the given account and for the given instrument.
+  2. Compute the low_trade_value and the high_trade_value:
+    - If there is no open order, we get the current market price and set low_trade_value and high_trade_value
+      to the current price.
+    - If there are open TAKE_PROFIT orders, we find the lowest and highest price of the orders from them.
+    - If there are open orders but no TAKE_PROFIT orders, we wait for the first executed order.
+  3. Compute the list of orders to place:
+    - Given a list of MARKET_IF_TOUCHED orders, we compute the list of orders to place.
+    - We add the orders that are missing (not already placed).
+    - [UNUSED] We remove the orders that are too far from the current price (cleaning).
+      We don't use this feature for now because we set orders to auto-expire after 24 hours (GFD orders).
+  4. Post the orders.
+  """
 
   alias Landbuyer.Schemas.Account
   alias Landbuyer.Schemas.Trader
@@ -23,7 +38,6 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end
   end
 
-  # Get all orders with state PENDING for the given account and for the given instrument.
   @spec get_open_orders(Account.t(), Trader.t()) :: {:ok, list()} | Strategies.events()
   defp get_open_orders(account, trader) do
     baseurl = "https://#{account.hostname}/v3/accounts/#{account.oanda_id}"
@@ -43,8 +57,6 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end
   end
 
-  # If there is no open order, we get the current market price.
-  # We set low_trade and high_trade values to the current price.
   @spec compute_trade_values(list(), Account.t(), Trader.t()) :: {:ok, float(), float()} | Strategies.events()
   defp compute_trade_values([], account, trader) do
     baseurl = "https://#{account.hostname}/v3/accounts/#{account.oanda_id}"
@@ -66,8 +78,6 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end
   end
 
-  # If there are open TAKE_PROFIT orders, we find the lowest and highest price of the orders from them.
-  # If there are open orders but no TAKE_PROFIT orders, we wait for the first executed order.
   defp compute_trade_values(orders, _account, %{instrument: instr, options: options} = trader) do
     orders = Enum.filter(orders, fn %{"type" => type} -> type == "TAKE_PROFIT" end)
 
@@ -87,10 +97,6 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end
   end
 
-  # Given a list of MARKET_IF_TOUCHED orders, we compute the list of orders to place.
-  # - We add the orders that are missing (not already placed).
-  # - [not use now] We remove the orders that are too far from the current price (cleaning).
-  #   We don't use this feature for now because we set orders to auto-expire after 24 hours (GFD orders).
   @spec compute_orders(list(), {float(), float()}, Trader.t()) :: list()
   defp compute_orders(orders, {low_trade, high_trade}, %{instrument: instr, options: options} = trader) do
     price_divider = :math.pow(10, instr.round_decimal)
@@ -128,21 +134,16 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end)
   end
 
-  # If there is no order to place, we don't post anything.
   @spec post_orders(list(), Account.t(), Trader.t()) :: Strategies.events()
   defp post_orders([], _account, _trader) do
     [{:nothing, :no_orders_to_place, %{}}]
   end
 
-  # If there are orders to place, we post them parallelly.
   defp post_orders(orders, account, trader) do
+    opts = [timeout: trader.rate_ms, on_timeout: :kill_task, zip_input_on_exit: true]
+
     orders
-    |> Task.async_stream(
-      fn order -> post_order(order, account, trader) end,
-      timeout: trader.rate_ms,
-      on_timeout: :kill_task,
-      zip_input_on_exit: true
-    )
+    |> Task.async_stream(&post_order(&1, account, trader), opts)
     |> Enum.map(fn
       {:ok, response} -> response
       {:exit, {{:ok, _response}, reason}} -> {:error, :task_error, %{reason: reason}}

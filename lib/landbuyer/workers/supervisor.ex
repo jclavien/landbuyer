@@ -26,20 +26,19 @@ defmodule Landbuyer.Workers.Supervisor do
   end
 
   @spec create_worker(Account.t(), Trader.t()) :: :ignore | {:error, any()} | {:ok, pid()} | {:ok, pid(), any()}
-  def create_worker(account, trader) do
-    if trader.state == :active do
-      worker_state = %Workers.State{
+  def create_worker(account, %Trader{state: :active} = trader) do
+    worker_state =
+      %Workers.State{
         name: trader.id,
         account: %{account | traders: nil},
         trader: trader,
         data: %{}
       }
 
-      DynamicSupervisor.start_child(Workers.Supervisor, {Workers.GenServer, worker_state})
-    else
-      :ignore
-    end
+    DynamicSupervisor.start_child(Workers.Supervisor, {Workers.GenServer, worker_state})
   end
+
+  def create_worker(_account, _trader), do: :ignore
 
   @spec pause_worker(integer()) :: :ok
   def pause_worker(name) do
