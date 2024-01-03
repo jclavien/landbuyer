@@ -1,6 +1,6 @@
 # Used by "mix format"
 [
-  plugins: [Phoenix.LiveView.HTMLFormatter],
+  plugins: [Styler, Phoenix.LiveView.HTMLFormatter],
   import_deps: [:ecto],
   inputs: [
     "*.{heex,ex,exs}",

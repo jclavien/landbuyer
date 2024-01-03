@@ -21,7 +21,7 @@ defmodule Landbuyer.Accounts do
   end
 
   @spec get_all() :: [Account.t()]
-  def get_all() do
+  def get_all do
     subquery = from(t in Trader, order_by: [asc: t.id])
     query = from(a in Account, order_by: [asc: a.id], preload: [traders: ^subquery])
 

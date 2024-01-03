@@ -1,4 +1,5 @@
 defmodule Landbuyer.Workers.GenServer do
+  @moduledoc false
   use GenServer, restart: :transient
 
   alias Landbuyer.Workers.State
@@ -11,8 +12,7 @@ defmodule Landbuyer.Workers.GenServer do
   def init(%State{trader: trader} = state) do
     # Precompute strategy module
     strategy =
-      Landbuyer.Strategies.Strategies.all()
-      |> Enum.find(fn strategy -> strategy.key() == trader.strategy end)
+      Enum.find(Landbuyer.Strategies.Strategies.all(), fn strategy -> strategy.key() == trader.strategy end)
 
     # Set working data for the task
     data =

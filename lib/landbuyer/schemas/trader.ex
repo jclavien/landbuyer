@@ -48,7 +48,7 @@ defmodule Landbuyer.Schemas.Trader do
   end
 
   @spec strategies() :: Keyword.t()
-  def strategies() do
+  def strategies do
     Enum.map(@strategies, fn strat -> {strat.name(), strat.key()} end)
   end
 

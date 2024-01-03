@@ -45,7 +45,7 @@ defmodule Landbuyer.Strategies.Strategies do
   @callback run(Account.t(), Trader.t()) :: events()
 
   @spec all() :: [atom()]
-  def all() do
+  def all do
     [
       Landbuyer.Strategies.Empty,
       Landbuyer.Strategies.LandbuyerOrigin

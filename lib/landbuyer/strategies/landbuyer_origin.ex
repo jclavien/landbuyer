@@ -16,17 +16,17 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
   4. Post the orders.
   """
 
+  @behaviour Landbuyer.Strategies.Strategies
+
   alias Landbuyer.Schemas.Account
   alias Landbuyer.Schemas.Trader
   alias Landbuyer.Strategies.Strategies
 
-  @behaviour Strategies
-
   @spec key() :: atom()
-  def key(), do: :landbuyer_origin
+  def key, do: :landbuyer_origin
 
   @spec name() :: String.t()
-  def name(), do: "Landbuyer Origin"
+  def name, do: "Landbuyer Origin"
 
   @spec run(Account.t(), Trader.t()) :: Strategies.events()
   def run(account, trader) do

@@ -20,12 +20,12 @@ defmodule Landbuyer.DataCase do
 
   using do
     quote do
-      alias Landbuyer.Repo
-
       import Ecto
       import Ecto.Changeset
       import Ecto.Query
       import Landbuyer.DataCase
+
+      alias Landbuyer.Repo
     end
   end
 

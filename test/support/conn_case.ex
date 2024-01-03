@@ -20,14 +20,14 @@ defmodule LandbuyerWeb.ConnCase do
   using do
     quote do
       # The default endpoint for testing
-      @endpoint LandbuyerWeb.Endpoint
-
       use LandbuyerWeb, :verified_routes
 
       # Import conveniences for testing with connections
-      import Plug.Conn
-      import Phoenix.ConnTest
       import LandbuyerWeb.ConnCase
+      import Phoenix.ConnTest
+      import Plug.Conn
+
+      @endpoint LandbuyerWeb.Endpoint
     end
   end
 

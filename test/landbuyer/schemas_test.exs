@@ -13,16 +13,16 @@ defmodule Landbuyer.SchemasTest do
 
     @trader %{
       "state" => :paused,
-      "strategy" => :default,
+      "strategy" => :empty,
       "rate_ms" => 1000,
       "instrument" => %{
         "currency_pair" => "XXX_YYY",
         "round_decimal" => 4
       },
       "options" => %{
-        "distance_on_take_profit" => 0.0010,
-        "distance_between_position" => 0.01,
-        "distance_on_stop_loss" => 0.0,
+        "distance_on_take_profit" => 10,
+        "distance_between_position" => 1,
+        "distance_on_stop_loss" => 20,
         "position_amount" => 20,
         "max_order" => 10
       }
@@ -65,7 +65,7 @@ defmodule Landbuyer.SchemasTest do
       assert {:ok, _} = Accounts.delete_trader(trader)
 
       assert {:ok, account} = Accounts.get(account.id)
-      assert length(account.traders) == 0
+      assert account.traders == []
     end
 
     test "Get account" do

@@ -136,7 +136,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
         {:noreply, socket |> default_assigns() |> put_flash(:info, "Compte supprimé") |> push_patch(to: ~p"/")}
 
       {:error, _changeset} ->
-        {:noreply, socket |> put_flash(:error, "Erreur lors de la suppression du compte")}
+        {:noreply, put_flash(socket, :error, "Erreur lors de la suppression du compte")}
     end
   end
 
@@ -230,7 +230,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
          |> push_patch(to: ~p"/account/#{account.id}")}
 
       {:error, _changeset} ->
-        {:noreply, socket |> put_flash(:error, "Erreur lors de la suppression du compte")}
+        {:noreply, put_flash(socket, :error, "Erreur lors de la suppression du compte")}
     end
   end
 
@@ -260,7 +260,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
     assign(socket, active_account: account)
   end
 
-  defp default_account_changeset() do
+  defp default_account_changeset do
     Account.changeset(%Account{}, %{})
   end
 

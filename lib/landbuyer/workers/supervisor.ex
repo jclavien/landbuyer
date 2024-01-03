@@ -1,4 +1,5 @@
 defmodule Landbuyer.Workers.Supervisor do
+  @moduledoc false
   use DynamicSupervisor
 
   alias Landbuyer.Accounts
@@ -16,12 +17,9 @@ defmodule Landbuyer.Workers.Supervisor do
   end
 
   @spec maybe_spawn_active_traders() :: :ok
-  def maybe_spawn_active_traders() do
-    Accounts.get_all()
-    |> Enum.each(fn account ->
-      Enum.each(account.traders, fn trader ->
-        create_worker(account, trader)
-      end)
+  def maybe_spawn_active_traders do
+    Enum.each(Accounts.get_all(), fn account ->
+      Enum.each(account.traders, fn trader -> create_worker(account, trader) end)
     end)
   end
 

@@ -6,17 +6,17 @@ defmodule Landbuyer.Strategies.Empty do
   for gen_server and supervisor behaviours.
   """
 
+  @behaviour Landbuyer.Strategies.Strategies
+
   alias Landbuyer.Schemas.Account
   alias Landbuyer.Schemas.Trader
   alias Landbuyer.Strategies.Strategies
 
-  @behaviour Strategies
-
   @spec key() :: atom()
-  def key(), do: :empty
+  def key, do: :empty
 
   @spec name() :: String.t()
-  def name(), do: "Vide"
+  def name, do: "Vide"
 
   @spec run(Account.t(), Trader.t()) :: Strategies.events()
   def run(_account, _trader) do
