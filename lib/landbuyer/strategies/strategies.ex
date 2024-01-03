@@ -48,7 +48,8 @@ defmodule Landbuyer.Strategies.Strategies do
   def all do
     [
       Landbuyer.Strategies.Empty,
-      Landbuyer.Strategies.LandbuyerOrigin
+      Landbuyer.Strategies.LandbuyerOrigin,
+      Landbuyer.Strategies.MitCleaner
     ]
   end
 end

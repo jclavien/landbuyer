@@ -13,7 +13,8 @@ defmodule Landbuyer.Schemas.Trader do
   @states [:paused, :active]
   @strategies [
     Landbuyer.Strategies.Empty,
-    Landbuyer.Strategies.LandbuyerOrigin
+    Landbuyer.Strategies.LandbuyerOrigin,
+    Landbuyer.Strategies.MitCleaner
   ]
 
   @type t() :: %Trader{
