@@ -1,8 +1,8 @@
 defmodule Landbuyer.Strategies.MitCleaner do
   @moduledoc """
-  Landbuyer Origin strategy.
+  Landbuyer M. if T. cleaner strategy.
 
-  1. TODO.
+  TODO.
   """
 
   @behaviour Landbuyer.Strategies.Strategies
@@ -88,8 +88,7 @@ defmodule Landbuyer.Strategies.MitCleaner do
 
   defp handle_poison_error(poison_error) do
     case poison_error do
-      {:ok, %HTTPoison.Response{status_code: code} = a} ->
-        IO.inspect(a)
+      {:ok, %HTTPoison.Response{status_code: code}} ->
         {:error, :wrong_http_code, %{status_code: code}}
 
       {:ok, %HTTPoison.Response{} = poison_response} ->

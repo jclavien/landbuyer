@@ -2,18 +2,7 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
   @moduledoc """
   Landbuyer Origin strategy.
 
-  1. Get all orders with state PENDING for the given account and for the given instrument.
-  2. Compute the low_trade_value and the high_trade_value:
-    - If there is no open order, we get the current market price and set low_trade_value and high_trade_value
-      to the current price.
-    - If there are open TAKE_PROFIT orders, we find the lowest and highest price of the orders from them.
-    - If there are open orders but no TAKE_PROFIT orders, we wait for the first executed order.
-  3. Compute the list of orders to place:
-    - Given a list of MARKET_IF_TOUCHED orders, we compute the list of orders to place.
-    - We add the orders that are missing (not already placed).
-    - [UNUSED] We remove the orders that are too far from the current price (cleaning).
-      We don't use this feature for now because we set orders to auto-expire after 24 hours (GFD orders).
-  4. Post the orders.
+  TODO.
   """
 
   @behaviour Landbuyer.Strategies.Strategies
@@ -37,7 +26,6 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end
   end
 
-  # récuperer le prix du marché
   @spec get_market_price(Account.t(), Trader.t()) :: {:ok, float()} | Strategies.events()
   defp get_market_price(account, trader) do
     baseurl = "https://#{account.hostname}/v3/accounts/#{account.oanda_id}"
@@ -58,8 +46,6 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end
   end
 
-  # récuprer les orders de type "TAKE_PROFIT"
-  # récuprer les orders de type "MARKET_IF_TOUCHED"
   @spec get_orders(Account.t(), Trader.t()) :: {:ok, list(), list()} | Strategies.events()
   defp get_orders(account, trader) do
     baseurl = "https://#{account.hostname}/v3/accounts/#{account.oanda_id}"
@@ -113,10 +99,8 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
       1..options.max_order
       |> Enum.flat_map(fn i -> [market_price - i * step_size, market_price + i * step_size] end)
       |> Enum.map(fn price -> format_float(price, trader) end)
-      |> Enum.reject(fn price -> Enum.any?(mit_to_reject, fn order_price -> order_price == price end) end)
-      |> Enum.reject(fn price ->
-        Enum.any?(tp_to_reject, fn order_price -> order_price - dist_on_take_profit == price end)
-      end)
+      |> Enum.reject(fn price -> Enum.any?(mit_to_reject, fn op -> op == price end) end)
+      |> Enum.reject(fn price -> Enum.any?(tp_to_reject, fn op -> op - dist_on_take_profit == price end) end)
       |> Enum.map(fn price ->
         tp_price = format_float_to_string(price + dist_on_take_profit, trader)
         price = format_float_to_string(price, trader)
