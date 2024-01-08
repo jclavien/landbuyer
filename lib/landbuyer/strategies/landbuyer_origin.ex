@@ -27,12 +27,12 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
   end
 
   @spec get_market_price(Account.t(), Trader.t()) :: {:ok, float()} | Strategies.events()
-  defp get_market_price(account, trader) do
+  defp get_market_price(account, %{instrument: instr} = trader) do
     baseurl = "https://#{account.hostname}/v3/accounts/#{account.oanda_id}"
 
     request = %HTTPoison.Request{
       method: :get,
-      url: "#{baseurl}/pricing?instruments=#{trader.instrument.currency_pair}",
+      url: "#{baseurl}/pricing?instruments=#{instr.currency_pair}",
       headers: [{"Authorization", "Bearer #{account.token}"}],
       options: [timeout: trader.rate_ms]
     }
@@ -40,19 +40,19 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.request(request),
          {:ok, %{"prices" => prices}} <- Poison.decode(body) do
       %{"closeoutAsk" => market_price} = hd(prices)
-      {:ok, format_float(market_price, trader)}
+      {:ok, to_float(market_price, instr.round_decimal)}
     else
       poison_error -> [handle_poison_error(poison_error)]
     end
   end
 
   @spec get_orders(Account.t(), Trader.t()) :: {:ok, list(), list()} | Strategies.events()
-  defp get_orders(account, trader) do
+  defp get_orders(account, %{instrument: instr} = trader) do
     baseurl = "https://#{account.hostname}/v3/accounts/#{account.oanda_id}"
 
     request = %HTTPoison.Request{
       method: :get,
-      url: "#{baseurl}/orders?state=PENDING&instrument=#{trader.instrument.currency_pair}&count=500",
+      url: "#{baseurl}/orders?state=PENDING&instrument=#{instr.currency_pair}&count=500",
       headers: [{"Authorization", "Bearer #{account.token}"}],
       options: [timeout: trader.rate_ms]
     }
@@ -62,12 +62,12 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
       mit_orders =
         orders
         |> Enum.filter(fn %{"type" => type} -> type == "MARKET_IF_TOUCHED" end)
-        |> Enum.map(fn %{"price" => price} -> format_float(price, trader) end)
+        |> Enum.map(fn %{"price" => price} -> to_float(price, instr.round_decimal) end)
 
       tp_orders =
         orders
         |> Enum.filter(fn %{"type" => type} -> type == "TAKE_PROFIT" end)
-        |> Enum.map(fn %{"price" => price} -> format_float(price, trader) end)
+        |> Enum.map(fn %{"price" => price} -> to_float(price, instr.round_decimal) end)
 
       {:ok, mit_orders, tp_orders}
     else
@@ -80,11 +80,12 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     [{:nothing, :waiting_for_first_executed_order, %{}}]
   end
 
-  defp compute_orders(market_price, mit_orders, tp_orders, %{instrument: instr, options: options} = trader) do
+  defp compute_orders(market_price, mit_orders, tp_orders, %{instrument: instr, options: options}) do
     price_divider = :math.pow(10, instr.round_decimal)
     dist_on_take_profit = options.distance_on_take_profit / price_divider
     step_size = options.distance_between_position / price_divider
     order_range = (options.max_order + 1) * step_size
+    comparison_range = 0.5 / price_divider
     high_limit = market_price + order_range
     low_limit = market_price - order_range
 
@@ -98,12 +99,20 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     orders_to_place =
       1..options.max_order
       |> Enum.flat_map(fn i -> [market_price - i * step_size, market_price + i * step_size] end)
-      |> Enum.map(fn price -> format_float(price, trader) end)
-      |> Enum.reject(fn price -> Enum.any?(mit_to_reject, fn op -> op == price end) end)
-      |> Enum.reject(fn price -> Enum.any?(tp_to_reject, fn op -> op - dist_on_take_profit == price end) end)
+      |> Enum.map(fn price -> to_float(price, instr.round_decimal) end)
+      |> Enum.reject(fn price ->
+        Enum.any?(mit_to_reject, fn x ->
+          x + comparison_range > price and x - comparison_range < price
+        end)
+      end)
+      |> Enum.reject(fn price ->
+        Enum.any?(tp_to_reject, fn x ->
+          x - dist_on_take_profit + comparison_range > price and x - dist_on_take_profit - comparison_range < price
+        end)
+      end)
       |> Enum.map(fn price ->
-        tp_price = format_float_to_string(price + dist_on_take_profit, trader)
-        price = format_float_to_string(price, trader)
+        tp_price = float_to_string(price + dist_on_take_profit, instr.round_decimal)
+        price = float_to_string(price, instr.round_decimal)
 
         %{
           type: "MARKET_IF_TOUCHED",
@@ -162,21 +171,21 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
 
   # Helpers
 
-  defp format_float(price, trader) when is_binary(price) do
+  defp to_float(price, decimal) when is_binary(price) do
     price
     |> String.to_float()
-    |> Float.round(trader.instrument.round_decimal)
+    |> to_float(decimal)
   end
 
-  defp format_float(price, trader) do
-    Float.round(price, trader.instrument.round_decimal)
+  defp to_float(price, decimal) do
+    Float.round(price, decimal)
   end
 
-  defp format_float_to_string(price, trader) do
+  defp float_to_string(price, decimal) do
     price
-    |> format_float(trader)
+    |> to_float(decimal)
     |> Float.to_string()
-    |> String.slice(0..(2 + trader.instrument.round_decimal))
+    |> String.slice(0..(2 + decimal))
   end
 
   defp handle_poison_error(poison_error) do

@@ -52,9 +52,12 @@ defmodule Landbuyer.Workers.GenServer do
     stop = :os.system_time(:millisecond)
 
     # TODO: Record resp in database
-    # Print temporary the response
-    duration = String.pad_leading("#{stop - start}", 4, " ")
-    IO.puts("#{format_ids(account.id, trader.id)} | #{duration}ms | #{inspect(resp)}")
+
+    if resp != [{:nothing, :no_orders_to_place, %{}}] do
+      # Print temporary the response
+      duration = String.pad_leading("#{stop - start}", 4, " ")
+      IO.puts("#{format_ids(account.id, trader.id)} | #{duration}ms | #{inspect(resp)}")
+    end
 
     # Increment counter
     %{state | data: %{state.data | counter: counter + 1}}
