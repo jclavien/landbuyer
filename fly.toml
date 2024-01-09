@@ -3,33 +3,32 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "landbuyer"
+app            = "landbuyer"
 primary_region = "ams"
-kill_signal = "SIGTERM"
-swap_size_mb = 512
-
-[build]
+kill_signal    = "SIGTERM"
+swap_size_mb   = 512
 
 [deploy]
-release_command = "/app/bin/migrate"
+  release_command = "/app/bin/migrate"
 
 [env]
-PHX_HOST = "landbuyer.fly.dev"
-PORT = "8080"
+  PHX_HOST = "landbuyer.fly.dev"
+  PORT     = "8080"
 
 [http_service]
-internal_port = 8080
-force_https = true
-auto_stop_machines = false
-auto_start_machines = true
-min_machines_running = 1
-processes = ["app"]
+  internal_port        = 8080
+  force_https          = true
+  auto_stop_machines   = true
+  auto_start_machines  = true
+  min_machines_running = 1
+  processes            = ["app"]
+
 [http_service.concurrency]
-type = "connections"
-hard_limit = 1000
-soft_limit = 1000
+  type       = "connections"
+  hard_limit = 1000
+  soft_limit = 1000
 
 [[vm]]
-cpu_kind = "shared"
-cpus = 1
-memory_mb = 256
+  cpu_kind  = "shared"
+  cpus      = 1
+  memory_mb = 256
