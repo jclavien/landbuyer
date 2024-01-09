@@ -4,6 +4,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
   use LandbuyerWeb, :html
 
   attr(:accounts, :map, required: true)
+  attr(:active_account, :map)
 
   @spec accounts_list(map()) :: Phoenix.LiveView.Rendered.t()
   def accounts_list(assigns) do
@@ -40,7 +41,13 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
       </button>
       <.link
         patch={~p"/account/#{account.id}"}
-        class="block p-3 space-y-2 border border-gray-800 bg-black/20 hover:bg-black/30 transition-all"
+        class={[
+          "block p-3 space-y-2 border transition-all",
+          if(@active_account && @active_account.id == account.id,
+            do: "border-gray-500 bg-black/40 hover:bg-black/50",
+            else: "border-gray-800 bg-black/20 hover:bg-black/30"
+          )
+        ]}
       >
         <div class="text-base">
           <%= account.label %>

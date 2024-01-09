@@ -47,7 +47,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
 
       <div class="flex h-[calc(100%-7rem)] overflow-hidden">
         <div class="w-96 p-4 border-r bg-gray-900 border-gray-700 overflow-y-auto">
-          <.accounts_list :if={not @show_form_account} accounts={@accounts} />
+          <.accounts_list :if={not @show_form_account} accounts={@accounts} active_account={@active_account} />
           <.accounts_create :if={@show_form_account} changeset={@account_changeset} />
         </div>
 
