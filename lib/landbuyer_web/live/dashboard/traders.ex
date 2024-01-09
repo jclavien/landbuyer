@@ -14,7 +14,13 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
       <%= @account.label %>
     </h1>
 
-    <section :for={trader <- @account.traders} class="mb-3 text-sm border border-gray-700 bg-black/20 transition-all">
+    <section
+      :for={trader <- @account.traders}
+      class={[
+        "mb-3 text-sm border bg-black/20 transition-all",
+        if(trader.state == :active, do: "border-green/50 shadow-xl shadow-green/20", else: "border-gray-700")
+      ]}
+    >
       <.header trader={trader} account_id={@account.id} />
       <.options trader={trader} />
       <.graph />
@@ -97,7 +103,10 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
     <header class="relative p-4 border-b border-gray-700">
       <div class="flex gap-5 items-baseline">
         <h2 class="flex gap-2 items-center text-base">
-          <div :if={@trader.state == :active} class="w-3 h-3 rounded-full bg-green"></div>
+          <div :if={@trader.state == :active} class="relative w-3 h-3">
+            <div class="absolute inset-0 rounded-full bg-green"></div>
+            <div class="absolute -inset-1 rounded-full bg-green/40 motion-safe:animate-ping"></div>
+          </div>
           <div :if={@trader.state == :paused} class="w-3 h-3 rounded-full bg-gray-200"></div>
           <%= "Trader A#{@account_id}/T#{@trader.id}" %>
         </h2>
@@ -115,6 +124,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
           :if={@trader.state == :active}
           phx-click="toggle_trader_state"
           phx-value-id={@trader.id}
+          phx-throttle="1000"
           theme={:secondary}
           class="grid place-content-center h-8"
         >
@@ -124,6 +134,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
           :if={@trader.state == :paused}
           phx-click="toggle_trader_state"
           phx-value-id={@trader.id}
+          phx-throttle="1000"
           theme={:primary}
           class="grid place-content-center h-8"
         >
