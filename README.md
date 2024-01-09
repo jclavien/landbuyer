@@ -2,15 +2,11 @@
 
 Welcome to the Landbuyer App documentation!
 
-TODO
-
 # About the Project
 
-TODO
+The Landbuyer app allows users to establish accounts using credentials for the [OANDA trading API](https://developer.oanda.com/rest-live-v20/introduction/), subsequently enabling the creation of traders associated with these accounts.
 
-## Features
-
-TODO
+Traders represent continuous tasks that execute strategies on the OANDA API at a specified frequency.
 
 # Installation
 
@@ -44,7 +40,7 @@ However, the app is already configured for fast deployment on [fly.io](https://f
 
 ## Admin Panel Access in Production
 
-During deployment, you'll need to set environment variables to access the admin panel. Here's an example of how to do it for fly.io:
+During deployment, you'll need to set environment variables to access the app. Here's an example of how to do it for fly.io:
 ``` bash
 fly secrets set ADMIN_USERNAME={some_user}
 fly secrets set ADMIN_PASSWORD={some_password}
