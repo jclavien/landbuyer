@@ -17,6 +17,7 @@ defmodule Landbuyer.Schemas.Instrument do
     field(:round_decimal, :integer)
   end
 
+  @spec changeset(Instrument.t()) :: Ecto.Changeset.t()
   @spec changeset(Instrument.t(), map()) :: Ecto.Changeset.t()
   def changeset(instrument, params \\ %{}) do
     instrument

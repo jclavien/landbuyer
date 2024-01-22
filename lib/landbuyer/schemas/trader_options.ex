@@ -16,6 +16,7 @@ defmodule Landbuyer.Schemas.TraderOptions do
   ]
 
   @type t() :: %TraderOptions{
+          id: integer() | nil,
           distance_on_take_profit: integer() | nil,
           distance_between_position: integer() | nil,
           distance_on_stop_loss: integer() | nil,
@@ -30,6 +31,7 @@ defmodule Landbuyer.Schemas.TraderOptions do
     field(:max_order, :integer)
   end
 
+  @spec changeset(TraderOptions.t()) :: Ecto.Changeset.t()
   @spec changeset(TraderOptions.t(), map()) :: Ecto.Changeset.t()
   def changeset(trader_options, params \\ %{}) do
     trader_options

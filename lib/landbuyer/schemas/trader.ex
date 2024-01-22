@@ -18,12 +18,17 @@ defmodule Landbuyer.Schemas.Trader do
   ]
 
   @type t() :: %Trader{
+          __meta__: Ecto.Schema.Metadata.t() | nil,
           id: integer() | nil,
           state: atom() | nil,
           strategy: atom() | nil,
           rate_ms: integer() | nil,
           instrument: Instrument.t() | nil,
-          options: TraderOptions.t() | nil
+          options: TraderOptions.t() | nil,
+          account_id: integer() | nil,
+          account: Account.t() | Ecto.Association.NotLoaded.t() | nil,
+          inserted_at: NaiveDateTime.t() | nil,
+          updated_at: NaiveDateTime.t() | nil
         }
   schema("traders") do
     field(:state, Ecto.Enum, values: @states)
@@ -36,6 +41,7 @@ defmodule Landbuyer.Schemas.Trader do
     timestamps(type: :naive_datetime_usec)
   end
 
+  @spec changeset(Trader.t()) :: Ecto.Changeset.t()
   @spec changeset(Trader.t(), map()) :: Ecto.Changeset.t()
   def changeset(trader, params \\ %{}) do
     trader

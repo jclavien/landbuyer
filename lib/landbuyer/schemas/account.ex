@@ -9,12 +9,15 @@ defmodule Landbuyer.Schemas.Account do
   alias Landbuyer.Schemas.Trader
 
   @type t() :: %Account{
+          __meta__: Ecto.Schema.Metadata.t() | nil,
           id: integer() | nil,
           label: String.t() | nil,
           oanda_id: String.t() | nil,
           hostname: String.t() | nil,
           token: String.t() | nil,
-          traders: [Trader.t()] | %Ecto.Association.NotLoaded{} | nil
+          traders: [Trader.t()] | %Ecto.Association.NotLoaded{} | nil,
+          inserted_at: NaiveDateTime.t() | nil,
+          updated_at: NaiveDateTime.t() | nil
         }
   schema("accounts") do
     field(:label, :string)
@@ -26,6 +29,7 @@ defmodule Landbuyer.Schemas.Account do
     timestamps(type: :naive_datetime_usec)
   end
 
+  @spec changeset(Account.t()) :: Ecto.Changeset.t()
   @spec changeset(Account.t(), map()) :: Ecto.Changeset.t()
   def changeset(account, params \\ %{}) do
     account
