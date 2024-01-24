@@ -53,7 +53,8 @@ defmodule Landbuyer.MixProject do
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:styler, "~> 0.11", only: [:dev, :test], runtime: false},
-      {:lucide_live_view, git: "https://github.com/abdelaz3r/lucide_live_view.git", tag: "v1.1"}
+      {:lucide_live_view, git: "https://github.com/abdelaz3r/lucide_live_view.git", tag: "v1.1"},
+      {:simple_charts, git: "https://github.com/abdelaz3r/simple_charts", ref: "main"}
     ]
   end
 

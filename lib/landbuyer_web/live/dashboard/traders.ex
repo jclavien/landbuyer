@@ -4,6 +4,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
   use LandbuyerWeb, :html
 
   alias Landbuyer.Schemas.Trader
+  alias LandbuyerWeb.Live.Dashboard.TradersGraph
 
   attr(:account, :map, required: true)
 
@@ -23,7 +24,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
     >
       <.header trader={trader} account_id={@account.id} />
       <.options trader={trader} />
-      <.graph />
+      <.live_component module={TradersGraph} id={trader.id} trader={trader} />
     </section>
 
     <.button phx-click="toggle_form_trader" theme={:secondary}>
@@ -183,15 +184,6 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
       <.label_value label="Dist. entre positions" value={@trader.options.distance_between_position} unit="pips" />
       <.label_value label="Montant des positions" value={@trader.options.position_amount} unit="unités" />
       <.label_value label="Maximum d'ordres" value={@trader.options.max_order} unit="x2" />
-    </div>
-    """
-  end
-
-  @spec graph(map()) :: Phoenix.LiveView.Rendered.t()
-  defp graph(assigns) do
-    ~H"""
-    <div class="p-4 opacity-50">
-      Affichage des derniers ordres
     </div>
     """
   end
