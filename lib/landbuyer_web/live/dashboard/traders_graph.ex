@@ -5,6 +5,12 @@ defmodule LandbuyerWeb.Live.Dashboard.TradersGraph do
 
   use LandbuyerWeb, :live_component
 
+  @timesframes [
+    {:last_two_hours, "2 heures"},
+    {:last_two_days, "2 jours"},
+    {:last_month, "30 jours"}
+  ]
+
   @graph_options [
     width: 100,
     height: 6,
@@ -21,8 +27,8 @@ defmodule LandbuyerWeb.Live.Dashboard.TradersGraph do
   def mount(socket) do
     socket =
       socket
-      |> assign(timeframe: :last_hour)
-      |> assign(timeframes: [{:last_hour, "heure"}, {:last_day, "jour"}, {:last_week, "semaine"}])
+      |> assign(timeframe: :last_two_hours)
+      |> assign(timeframes: @timesframes)
 
     {:ok, socket}
   end

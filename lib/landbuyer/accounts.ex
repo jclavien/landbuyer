@@ -94,13 +94,13 @@ defmodule Landbuyer.Accounts do
   end
 
   @spec get_graph_data(Trader.t()) :: list(list())
-  @spec get_graph_data(Trader.t(), :last_hour | :last_day | :last_week) :: list(list())
-  def get_graph_data(trader, timeframe \\ :last_hour) do
+  @spec get_graph_data(Trader.t(), :last_two_hours | :last_two_days | :last_month) :: list(list())
+  def get_graph_data(trader, timeframe \\ :last_two_hours) do
     {aggregator, interval} =
       case timeframe do
-        :last_hour -> {"second", "'1' HOUR"}
-        :last_day -> {"minute", "'1' DAY"}
-        :last_week -> {"hour", "'7' DAY"}
+        :last_two_hours -> {"minute", "'2' HOUR"}
+        :last_two_days -> {"hour", "'2' DAY"}
+        :last_month -> {"day", "'30' DAY"}
       end
 
     {:ok, %{rows: rows}} =
