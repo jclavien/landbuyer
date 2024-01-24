@@ -83,5 +83,30 @@ defmodule Landbuyer.SchemasTest do
 
       assert length(Accounts.get_all()) == 3
     end
+
+    test "Operations on events" do
+      event1 = %{type: :error, reason: "nothing", message: %{data1: "data1", data2: "data2"}}
+      event2 = %{type: :success, reason: "stuff", message: %{}}
+      event3 = %{type: :success, reason: "stuff", message: %{data1: "data1", data2: "data2"}}
+
+      assert {:ok, account} = Accounts.create(@account)
+      assert {:ok, trader} = Accounts.create_trader(account, @trader)
+
+      assert {:ok, %Landbuyer.Schemas.Event{}} = Accounts.create_event(trader, event1)
+      assert {:ok, %Landbuyer.Schemas.Event{}} = Accounts.create_event(trader, event2)
+      assert {:ok, %Landbuyer.Schemas.Event{}} = Accounts.create_event(trader, event3)
+
+      # Test get_last_events
+      events = Accounts.get_last_events(trader)
+      assert length(events) == 3
+
+      # Test get_last_events of type :success
+      events = Accounts.get_last_events(trader, [:success])
+      assert length(events) == 2
+
+      # Test get_last_events with limit
+      events = Accounts.get_last_events(trader, :all, 1)
+      assert length(events) == 1
+    end
   end
 end

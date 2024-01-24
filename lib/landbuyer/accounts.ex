@@ -7,6 +7,7 @@ defmodule Landbuyer.Accounts do
 
   alias Landbuyer.Repo
   alias Landbuyer.Schemas.Account
+  alias Landbuyer.Schemas.Event
   alias Landbuyer.Schemas.Trader
 
   @spec get(integer()) :: {:ok, Account.t()} | {:error, :not_found}
@@ -65,5 +66,57 @@ defmodule Landbuyer.Accounts do
   @spec delete_trader(Trader.t()) :: {:ok, Trader.t()} | {:error, Ecto.Changeset.t()}
   def delete_trader(trader) do
     Repo.delete(trader)
+  end
+
+  @spec create_event(Trader.t(), map()) :: {:ok, Trader.t()} | {:error, Ecto.Changeset.t()}
+  def create_event(trader, event_params) do
+    trader
+    |> Ecto.build_assoc(:events)
+    |> Event.changeset(event_params)
+    |> Repo.insert()
+  end
+
+  @spec get_last_events(Trader.t()) :: [Event.t()]
+  @spec get_last_events(Trader.t(), list(atom()) | :all) :: [Event.t()]
+  @spec get_last_events(Trader.t(), list(atom()) | :all, non_neg_integer()) :: [Event.t()]
+  def get_last_events(trader, types \\ :all, limit \\ 100) do
+    where_types =
+      if types != :all,
+        do: dynamic([e], e.type in ^types),
+        else: true
+
+    Event
+    |> where([e], e.trader_id == ^trader.id)
+    |> where([e], ^where_types)
+    |> order_by([e], desc: e.inserted_at)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @spec get_graph_data(Trader.t()) :: list(list())
+  @spec get_graph_data(Trader.t(), :last_hour | :last_day | :last_week) :: list(list())
+  def get_graph_data(trader, timeframe \\ :last_hour) do
+    {aggregator, interval} =
+      case timeframe do
+        :last_hour -> {"second", "'1' HOUR"}
+        :last_day -> {"minute", "'1' DAY"}
+        :last_week -> {"hour", "'7' DAY"}
+      end
+
+    {:ok, %{rows: rows}} =
+      Ecto.Adapters.SQL.query(
+        Repo,
+        "SELECT
+          date_trunc($1, inserted_at) AS datetime,
+          SUM(CASE WHEN type = 'success' THEN 1 ELSE 0 END) AS count
+        FROM events
+        WHERE trader_id = $2
+          AND inserted_at >  TIMEZONE('utc', NOW()) - INTERVAL #{interval}
+        GROUP BY date_trunc($1, inserted_at)
+        ORDER BY date_trunc($1, inserted_at) DESC",
+        [aggregator, trader.id]
+      )
+
+    rows
   end
 end
