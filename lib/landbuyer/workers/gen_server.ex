@@ -2,6 +2,7 @@ defmodule Landbuyer.Workers.GenServer do
   @moduledoc false
   use GenServer, restart: :transient
 
+  alias Landbuyer.Accounts
   alias Landbuyer.Workers.State
 
   def start_link(%State{name: name} = state) do
@@ -47,17 +48,18 @@ defmodule Landbuyer.Workers.GenServer do
 
   defp run_task(%State{account: account, trader: trader, data: %{strategy: strategy, counter: counter}} = state) do
     # Run the strategy
-    start = :os.system_time(:millisecond)
-    resp = strategy.run(account, trader)
-    stop = :os.system_time(:millisecond)
+    events = strategy.run(account, trader)
 
-    # TODO: Record resp in database
+    # Maybe do batch insert here?
+    # Maybe do insert in a task here?
+    Enum.each(events, fn {type, reason, message} ->
+      event_params = %{type: type, reason: Atom.to_string(reason), message: message}
 
-    if resp != [{:nothing, :no_orders_to_place, %{}}] do
-      # Print temporary the response
-      duration = String.pad_leading("#{stop - start}", 4, " ")
-      IO.puts("#{format_ids(account.id, trader.id)} | #{duration}ms | #{inspect(resp)}")
-    end
+      case Accounts.create_event(trader, event_params) do
+        {:ok, event} -> event
+        {:error, _reason} -> :error
+      end
+    end)
 
     # Increment counter
     %{state | data: %{state.data | counter: counter + 1}}
