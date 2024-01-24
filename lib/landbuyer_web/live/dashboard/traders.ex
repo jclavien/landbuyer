@@ -78,6 +78,41 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
     """
   end
 
+  attr(:events, :list, required: true)
+
+  @spec traders_last_event(map()) :: Phoenix.LiveView.Rendered.t()
+  def traders_last_event(assigns) do
+    ~H"""
+    <div class="flex justify-between items-center gap-4 pb-4">
+      <h2 class="font-bold">Derniers événements</h2>
+      <.button theme={:ghost} only_icon={true} phx-click="toggle_last_events">
+        &times;
+      </.button>
+    </div>
+
+    <div class="space-y-2">
+      <section :for={event <- @events} class="hover:bg-gray-700">
+        <header class="flex justify-between">
+          <h1 class="flex gap-2">
+            <span class="opacity-50">#<%= event.id %></span>
+            <span><%= event.type %></span>
+          </h1>
+          <span class="opacity-50 text-sm">
+            <%= NaiveDateTime.to_string(event.inserted_at) %>
+          </span>
+        </header>
+
+        <div :if={not Enum.empty?(event.message)} class="pl-4">
+          <div :for={{key, value} <- event.message} class="grid grid-cols-2">
+            <span class="opacity-50"><%= key %></span>
+            <span><%= value %></span>
+          </div>
+        </div>
+      </section>
+    </div>
+    """
+  end
+
   attr(:account_id, :integer, required: true)
   attr(:trader, :map, required: true)
 

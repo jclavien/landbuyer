@@ -74,13 +74,7 @@ defmodule LandbuyerWeb.Live.Dashboard.TradersGraph do
           </h2>
         </div>
 
-        <.button
-          phx-click="todo"
-          phx-value-id={@trader.id}
-          phx-target={@myself}
-          theme={:secondary}
-          class="grid place-content-center h-8"
-        >
+        <.button phx-click="toggle_last_events" phx-value-id={@trader.id} theme={:secondary} class="grid place-content-center h-8">
           Afficher les derniers événements
         </.button>
       </div>

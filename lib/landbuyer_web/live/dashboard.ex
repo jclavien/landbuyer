@@ -26,6 +26,8 @@ defmodule LandbuyerWeb.Live.Dashboard do
       |> assign(show_form_trader: false)
       |> assign(trader_edit: false)
       |> assign(trader_changeset: default_trader_changeset())
+      |> assign(show_last_events: false)
+      |> assign(last_events: [])
 
     {:ok, socket}
   end
@@ -55,6 +57,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
           <div :if={@active_account}>
             <.traders_list account={@active_account} />
           </div>
+
           <div class={[
             "fixed top-14 bottom-14 w-96 transition-all",
             "border-l bg-gray-900 border-gray-700 shadow-xl",
@@ -63,6 +66,17 @@ defmodule LandbuyerWeb.Live.Dashboard do
           ]}>
             <div :if={@show_form_trader} phx-click-away="toggle_form_trader" class="h-full p-4 overflow-y-auto">
               <.traders_create changeset={@trader_changeset} edit={@trader_edit} />
+            </div>
+          </div>
+
+          <div class={[
+            "fixed top-14 bottom-14 w-96 transition-all",
+            "border-l bg-gray-900 border-gray-700 shadow-xl",
+            @show_last_events && "right-0",
+            not @show_last_events && "-right-96"
+          ]}>
+            <div :if={@show_last_events} phx-click-away="toggle_last_events" class="h-full p-4 overflow-y-auto">
+              <.traders_last_event events={@last_events} />
             </div>
           </div>
         </div>
@@ -224,6 +238,29 @@ defmodule LandbuyerWeb.Live.Dashboard do
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Erreur lors de la suppression du compte")}
     end
+  end
+
+  def handle_event("toggle_last_events", %{"id" => id}, socket) do
+    account = socket.assigns.active_account
+    trader_id = String.to_integer(id)
+    trader = Enum.find(account.traders, fn t -> t.id == trader_id end)
+    events = Accounts.get_last_events(trader, [:success, :error])
+
+    socket =
+      socket
+      |> assign(show_last_events: true)
+      |> assign(last_events: events)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("toggle_last_events", _params, socket) do
+    socket =
+      socket
+      |> assign(show_last_events: false)
+      |> assign(last_events: [])
+
+    {:noreply, socket}
   end
 
   defp default_assigns(socket) do
