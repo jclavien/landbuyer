@@ -83,7 +83,6 @@ defmodule LandbuyerWeb.Live.Dashboard do
     {:noreply, assign(socket, show_form_account: not socket.assigns.show_form_account)}
   end
 
-  @impl Phoenix.LiveView
   def handle_event("toggle_form_trader", %{"id" => trader_id}, socket) do
     trader_id = String.to_integer(trader_id)
     trader = Enum.find(socket.assigns.active_account.traders, fn t -> t.id == trader_id end)
@@ -97,7 +96,6 @@ defmodule LandbuyerWeb.Live.Dashboard do
     {:noreply, socket}
   end
 
-  @impl Phoenix.LiveView
   def handle_event("toggle_form_trader", _params, socket) do
     socket =
       socket
@@ -108,7 +106,6 @@ defmodule LandbuyerWeb.Live.Dashboard do
     {:noreply, socket}
   end
 
-  @impl Phoenix.LiveView
   def handle_event("create_account", %{"account" => account}, socket) do
     case Accounts.create(account) do
       {:ok, account} ->
@@ -127,7 +124,6 @@ defmodule LandbuyerWeb.Live.Dashboard do
     end
   end
 
-  @impl Phoenix.LiveView
   def handle_event("delete_account", %{"id" => id}, socket) do
     account = Enum.find(socket.assigns.accounts, fn a -> a.id == id end)
 
@@ -140,7 +136,6 @@ defmodule LandbuyerWeb.Live.Dashboard do
     end
   end
 
-  @impl Phoenix.LiveView
   def handle_event("create_trader", %{"trader" => trader}, socket) do
     account = socket.assigns.active_account
 
@@ -161,7 +156,6 @@ defmodule LandbuyerWeb.Live.Dashboard do
     end
   end
 
-  @impl Phoenix.LiveView
   def handle_event("update_trader", %{"trader" => params}, socket) do
     account = socket.assigns.active_account
     trader_id = String.to_integer(params["id"])
@@ -184,7 +178,6 @@ defmodule LandbuyerWeb.Live.Dashboard do
     end
   end
 
-  @impl Phoenix.LiveView
   def handle_event("toggle_trader_state", %{"id" => id}, socket) do
     account = socket.assigns.active_account
     trader_id = String.to_integer(id)
@@ -216,7 +209,6 @@ defmodule LandbuyerWeb.Live.Dashboard do
     end
   end
 
-  @impl Phoenix.LiveView
   def handle_event("delete_trader", %{"id" => id}, socket) do
     account = socket.assigns.active_account
     trader = Enum.find(account.traders, fn t -> t.id == id end)
