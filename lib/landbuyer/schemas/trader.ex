@@ -6,6 +6,7 @@ defmodule Landbuyer.Schemas.Trader do
   import Ecto.Changeset
 
   alias Landbuyer.Schemas.Account
+  alias Landbuyer.Schemas.Event
   alias Landbuyer.Schemas.Instrument
   alias Landbuyer.Schemas.Trader
   alias Landbuyer.Schemas.TraderOptions
@@ -27,6 +28,7 @@ defmodule Landbuyer.Schemas.Trader do
           options: TraderOptions.t() | nil,
           account_id: integer() | nil,
           account: Account.t() | Ecto.Association.NotLoaded.t() | nil,
+          events: [Event.t()] | %Ecto.Association.NotLoaded{} | nil,
           inserted_at: NaiveDateTime.t() | nil,
           updated_at: NaiveDateTime.t() | nil
         }
@@ -37,6 +39,7 @@ defmodule Landbuyer.Schemas.Trader do
     embeds_one(:instrument, Instrument, on_replace: :update)
     embeds_one(:options, TraderOptions, on_replace: :update)
     belongs_to(:account, Account)
+    has_many(:events, Event)
 
     timestamps(type: :naive_datetime_usec)
   end
