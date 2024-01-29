@@ -10,8 +10,6 @@ defmodule Landbuyer.Application do
   @impl Application
   def start(_type, _args) do
     children = [
-      # Start the Telemetry supervisor
-      LandbuyerWeb.Telemetry,
       # Start the Ecto repository
       Landbuyer.Repo,
       # Start the PubSub system
