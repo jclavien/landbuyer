@@ -13,6 +13,7 @@ defmodule Landbuyer.Format do
 
       iex> Landbuyer.Format.integer(123456789, ",")
       "123,456,789"
+
   """
   @spec integer(integer(), String.t()) :: String.t()
   def integer(integer, separator \\ " ") do
@@ -21,8 +22,7 @@ defmodule Landbuyer.Format do
     |> String.reverse()
     |> String.graphemes()
     |> Enum.chunk_every(3)
-    |> Enum.map(fn chunk -> chunk |> Enum.reverse() |> Enum.join() end)
-    |> Enum.reverse()
     |> Enum.join(separator)
+    |> String.reverse()
   end
 end
