@@ -40,9 +40,6 @@ defmodule Landbuyer.Application do
   def config_change(changed, _new, removed) do
     LandbuyerWeb.Endpoint.config_change(changed, removed)
 
-    # Spawn worker
-    Workers.Supervisor.maybe_spawn_active_traders()
-
     :ok
   end
 end
