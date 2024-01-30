@@ -8,7 +8,6 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
 
   attr(:account, :map, required: true)
 
-  @spec traders_list(map()) :: Phoenix.LiveView.Rendered.t()
   def traders_list(assigns) do
     ~H"""
     <h1 class="font-bold pb-4">
@@ -36,7 +35,6 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
   attr(:edit, :boolean, required: true)
   attr(:changeset, :map, required: true)
 
-  @spec traders_create(map()) :: Phoenix.LiveView.Rendered.t()
   def traders_create(assigns) do
     ~H"""
     <div class="flex justify-between items-center gap-4 pb-4">
@@ -80,7 +78,6 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
 
   attr(:events, :list, required: true)
 
-  @spec traders_last_event(map()) :: Phoenix.LiveView.Rendered.t()
   def traders_last_event(assigns) do
     ~H"""
     <div class="flex justify-between items-center gap-4 pb-4">
@@ -116,7 +113,6 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
   attr(:account_id, :integer, required: true)
   attr(:trader, :map, required: true)
 
-  @spec header(map()) :: Phoenix.LiveView.Rendered.t()
   defp header(assigns) do
     ~H"""
     <.modal
@@ -200,7 +196,6 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
 
   attr(:trader, :map, required: true)
 
-  @spec options(map()) :: Phoenix.LiveView.Rendered.t()
   defp options(assigns) do
     ~H"""
     <div class="grid grid-cols-5 p-4 border-b border-gray-700">
@@ -228,7 +223,6 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
   attr(:unit, :string, default: nil)
   attr(:class, :string, default: "")
 
-  @spec label_value(map()) :: Phoenix.LiveView.Rendered.t()
   defp label_value(assigns) do
     ~H"""
     <div class={["flex flex-col opacity-80", @class]}>

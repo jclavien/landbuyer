@@ -53,7 +53,10 @@ defmodule LandbuyerWeb.Live.Dashboard do
           <.accounts_create :if={@show_form_account} changeset={@account_changeset} />
         </div>
 
-        <div class="relative flex flex-1 flex-col p-4 w-full overflow-y-auto overflow-x-hidden">
+        <div class={[
+          "relative flex flex-1 flex-col p-4 w-full overflow-x-hidden",
+          if(@show_form_trader or @show_last_events, do: "overflow-y-hidden", else: "overflow-y-auto")
+        ]}>
           <div :if={@active_account}>
             <.traders_list account={@active_account} />
           </div>

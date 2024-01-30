@@ -3,7 +3,6 @@ defmodule LandbuyerWeb.Live.Dashboard.Layout do
 
   use LandbuyerWeb, :html
 
-  @spec layout_header(any()) :: Phoenix.LiveView.Rendered.t()
   def layout_header(assigns) do
     ~H"""
     <header class="flex items-center h-14 px-4 border-b bg-gray-950 border-gray-700">

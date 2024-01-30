@@ -6,7 +6,6 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
   attr(:accounts, :map, required: true)
   attr(:active_account, :map)
 
-  @spec accounts_list(map()) :: Phoenix.LiveView.Rendered.t()
   def accounts_list(assigns) do
     ~H"""
     <h1 class="font-bold pb-4">
@@ -69,7 +68,6 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
 
   attr(:changeset, :map, required: true)
 
-  @spec accounts_create(map()) :: Phoenix.LiveView.Rendered.t()
   def accounts_create(assigns) do
     ~H"""
     <div class="flex items-center gap-4 pb-4">
@@ -97,7 +95,6 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
   attr(:value, :string, required: true)
   attr(:class, :string, default: "")
 
-  @spec label_value(map()) :: Phoenix.LiveView.Rendered.t()
   defp label_value(assigns) do
     ~H"""
     <div class={["flex flex-col opacity-80", @class]}>

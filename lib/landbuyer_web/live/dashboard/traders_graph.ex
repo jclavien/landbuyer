@@ -23,7 +23,6 @@ defmodule LandbuyerWeb.Live.Dashboard.TradersGraph do
     line_smoothing: 0
   ]
 
-  @spec mount(map()) :: {:ok, map()}
   def mount(socket) do
     socket =
       socket
@@ -33,7 +32,6 @@ defmodule LandbuyerWeb.Live.Dashboard.TradersGraph do
     {:ok, socket}
   end
 
-  @spec update(map(), map()) :: {:ok, map()}
   def update(%{trader: trader}, %{assigns: assigns} = socket) do
     if Map.has_key?(assigns, :trader) and assigns.trader == trader do
       {:ok, socket}
@@ -47,7 +45,6 @@ defmodule LandbuyerWeb.Live.Dashboard.TradersGraph do
     end
   end
 
-  @spec render(map()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
     <div>
@@ -86,7 +83,6 @@ defmodule LandbuyerWeb.Live.Dashboard.TradersGraph do
     """
   end
 
-  @spec handle_event(String.t(), map(), map()) :: {:noreply, any()}
   def handle_event("update_timeframe", %{"timeframe" => timeframe}, socket) do
     socket =
       socket
