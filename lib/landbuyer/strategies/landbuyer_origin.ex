@@ -2,7 +2,8 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
   @moduledoc """
   Landbuyer Origin strategy.
 
-  TODO.
+  TODO:
+  - Use https://hexdocs.pm/decimal/Decimal.html instead of float and comparison range.
   """
 
   @behaviour Landbuyer.Strategies.Strategies
@@ -185,7 +186,6 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     price
     |> to_float(decimal)
     |> Float.to_string()
-    |> String.slice(0..(2 + decimal))
   end
 
   defp handle_poison_error(poison_error) do

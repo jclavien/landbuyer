@@ -2,7 +2,10 @@ defmodule Landbuyer.Strategies.MitCleaner do
   @moduledoc """
   Landbuyer M. if T. cleaner strategy.
 
-  TODO.
+  This strategy is used to clean all the Market if Touched orders, given an instrument,
+  that are still pending on the account.
+
+  It essentially automate cleaning the board to start fresh.
   """
 
   @behaviour Landbuyer.Strategies.Strategies

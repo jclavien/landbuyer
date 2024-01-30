@@ -28,7 +28,7 @@ defmodule Landbuyer.Schemas.Trader do
           options: TraderOptions.t() | nil,
           account_id: integer() | nil,
           account: Account.t() | Ecto.Association.NotLoaded.t() | nil,
-          events: [Event.t()] | %Ecto.Association.NotLoaded{} | nil,
+          events: [Event.t()] | Ecto.Association.NotLoaded.t() | nil,
           inserted_at: NaiveDateTime.t() | nil,
           updated_at: NaiveDateTime.t() | nil
         }

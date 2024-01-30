@@ -15,7 +15,7 @@ defmodule Landbuyer.Schemas.Account do
           oanda_id: String.t() | nil,
           hostname: String.t() | nil,
           token: String.t() | nil,
-          traders: [Trader.t()] | %Ecto.Association.NotLoaded{} | nil,
+          traders: [Trader.t()] | Ecto.Association.NotLoaded.t() | nil,
           inserted_at: NaiveDateTime.t() | nil,
           updated_at: NaiveDateTime.t() | nil
         }
