@@ -11,18 +11,6 @@ defmodule LandbuyerWeb.Live.Dashboard.TradersGraph do
     {:last_month, "30 jours"}
   ]
 
-  @graph_options [
-    width: 100,
-    height: 6,
-    padding: 0.5,
-    show_dot: false,
-    dot_radius: 0.1,
-    dot_color: "rgb(255, 255, 255)",
-    line_color: "rgba(166, 218, 149)",
-    line_width: 0.05,
-    line_smoothing: 0
-  ]
-
   def mount(socket) do
     socket =
       socket
@@ -76,8 +64,8 @@ defmodule LandbuyerWeb.Live.Dashboard.TradersGraph do
         </.button>
       </div>
 
-      <div :if={@graph} class="py-4 px-3.5 pt-0 mt-4">
-        <%= raw(@graph) %>
+      <div class="py-4 px-3.5 pt-0 mt-4">
+        <%= @graph %>
       </div>
     </div>
     """
@@ -93,19 +81,21 @@ defmodule LandbuyerWeb.Live.Dashboard.TradersGraph do
   end
 
   defp load_graph(%{assigns: %{trader: %{strategy: :landbuyer_origin}} = assigns} = socket) do
-    data =
-      assigns.trader
-      |> Landbuyer.Accounts.get_graph_data(assigns.timeframe)
-      |> Enum.map(fn [datetime, count] ->
-        {seconds, _} = NaiveDateTime.to_gregorian_seconds(datetime)
-        {seconds, count}
-      end)
+    # |> SparklineSvg.show_dots(class: "fill-green", radius: 0.2)
+    # |> SparklineSvg.add_marker([marker3, marker4], class: "fill-yellow/40 stroke-none")
 
     graph =
-      case SimpleCharts.Line.to_svg(data, @graph_options) do
-        {:ok, graph} -> graph
-        {:error, _reason} -> nil
-      end
+      assigns.trader
+      |> Landbuyer.Accounts.get_graph_data(assigns.timeframe)
+      |> Enum.map(fn [datetime, count] -> {datetime, count} end)
+      |> SparklineSvg.new(width: 100, height: 6, padding: 0.1, smoothing: 0)
+      |> SparklineSvg.show_line(class: "stroke-green stroke-[0.08px] fill-transparent")
+      |> SparklineSvg.show_area(class: "fill-green/10")
+      |> SparklineSvg.to_svg()
+      |> then(fn
+        {:ok, svg} -> {:safe, svg}
+        {:error, reason} -> Atom.to_string(reason)
+      end)
 
     assign(socket, graph: graph)
   end
