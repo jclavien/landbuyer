@@ -1,9 +1,6 @@
 defmodule Landbuyer.Strategies.LandbuyerOrigin do
   @moduledoc """
   Landbuyer Origin strategy.
-
-  TODO:
-  - Use https://hexdocs.pm/decimal/Decimal.html instead of float and comparison range.
   """
 
   @behaviour Landbuyer.Strategies.Strategies
@@ -27,7 +24,7 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end
   end
 
-  @spec get_market_price(Account.t(), Trader.t()) :: {:ok, float()} | Strategies.events()
+  @spec get_market_price(Account.t(), Trader.t()) :: {:ok, Decimal.t()} | Strategies.events()
   defp get_market_price(account, %{instrument: instr} = trader) do
     baseurl = "https://#{account.hostname}/v3/accounts/#{account.oanda_id}"
 
@@ -41,7 +38,7 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.request(request),
          {:ok, %{"prices" => prices}} <- Poison.decode(body) do
       %{"closeoutAsk" => market_price} = hd(prices)
-      {:ok, to_float(market_price, instr.round_decimal)}
+      {:ok, Decimal.new(market_price)}
     else
       poison_error -> [handle_poison_error(poison_error)]
     end
@@ -63,12 +60,12 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
       mit_orders =
         orders
         |> Enum.filter(fn %{"type" => type} -> type == "MARKET_IF_TOUCHED" end)
-        |> Enum.map(fn %{"price" => price} -> to_float(price, instr.round_decimal) end)
+        |> Enum.map(fn %{"price" => price} -> Decimal.new(price) end)
 
       tp_orders =
         orders
         |> Enum.filter(fn %{"type" => type} -> type == "TAKE_PROFIT" end)
-        |> Enum.map(fn %{"price" => price} -> to_float(price, instr.round_decimal) end)
+        |> Enum.map(fn %{"price" => price} -> Decimal.new(price) end)
 
       {:ok, mit_orders, tp_orders}
     else
@@ -76,44 +73,54 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
     end
   end
 
-  @spec compute_orders(float(), list(), list(), Trader.t()) :: {:ok, list()} | Strategies.events()
+  @spec compute_orders(Decimal.t(), list(), list(), Trader.t()) :: {:ok, list()} | Strategies.events()
   defp compute_orders(_market_price, mit_orders, [], _trader) when mit_orders != [] do
     [{:nothing, :waiting_for_first_executed_order, %{}}]
   end
 
   defp compute_orders(market_price, mit_orders, tp_orders, %{instrument: instr, options: options}) do
-    price_divider = :math.pow(10, instr.round_decimal)
-    dist_on_take_profit = options.distance_on_take_profit / price_divider
-    step_size = options.distance_between_position / price_divider
-    order_range = (options.max_order + 1) * step_size
-    comparison_range = 0.5 / price_divider
-    high_limit = market_price + order_range
-    low_limit = market_price - order_range
+    price_divider = Decimal.from_float(:math.pow(10, instr.round_decimal))
+    dist_on_take_profit = Decimal.div(options.distance_on_take_profit, price_divider)
+    step_size = Decimal.div(options.distance_between_position, price_divider)
+    order_range = Decimal.mult(Decimal.add(options.max_order, 1), step_size)
+    comparison_range = Decimal.div(Decimal.from_float(0.5), price_divider)
+    high_limit = Decimal.add(market_price, order_range)
+    low_limit = Decimal.sub(market_price, order_range)
 
-    mit_to_reject = Enum.reject(mit_orders, fn price -> price > high_limit or price < low_limit end)
+    mit_to_reject =
+      Enum.reject(mit_orders, fn price -> Decimal.gt?(price, high_limit) or Decimal.lt?(price, low_limit) end)
 
     tp_to_reject =
       Enum.reject(tp_orders, fn price ->
-        price - dist_on_take_profit > high_limit or price - dist_on_take_profit < low_limit
+        price = Decimal.sub(price, dist_on_take_profit)
+        Decimal.gt?(price, high_limit) or Decimal.lt?(price, low_limit)
       end)
 
     orders_to_place =
       1..options.max_order
-      |> Enum.flat_map(fn i -> [market_price - i * step_size, market_price + i * step_size] end)
-      |> Enum.map(fn price -> to_float(price, instr.round_decimal) end)
+      |> Enum.flat_map(fn i ->
+        step = Decimal.mult(i, step_size)
+        [Decimal.sub(market_price, step), Decimal.add(market_price, step)]
+      end)
       |> Enum.reject(fn price ->
         Enum.any?(mit_to_reject, fn x ->
-          x + comparison_range > price and x - comparison_range < price
+          Decimal.gt?(Decimal.add(x, comparison_range), price) and
+            Decimal.lt?(Decimal.sub(x, comparison_range), price)
         end)
       end)
       |> Enum.reject(fn price ->
         Enum.any?(tp_to_reject, fn x ->
-          x - dist_on_take_profit + comparison_range > price and x - dist_on_take_profit - comparison_range < price
+          x = Decimal.sub(x, dist_on_take_profit)
+
+          Decimal.gt?(Decimal.add(x, comparison_range), price) and
+            Decimal.lt?(Decimal.sub(x, comparison_range), price)
         end)
       end)
       |> Enum.map(fn price ->
-        tp_price = float_to_string(price + dist_on_take_profit, instr.round_decimal)
-        price = float_to_string(price, instr.round_decimal)
+        tp_price =
+          price |> Decimal.add(dist_on_take_profit) |> Decimal.round(instr.round_decimal) |> Decimal.to_string()
+
+        price = price |> Decimal.round(instr.round_decimal) |> Decimal.to_string()
 
         %{
           type: "MARKET_IF_TOUCHED",
@@ -171,22 +178,6 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
   end
 
   # Helpers
-
-  defp to_float(price, decimal) when is_binary(price) do
-    price
-    |> String.to_float()
-    |> to_float(decimal)
-  end
-
-  defp to_float(price, decimal) do
-    Float.round(price, decimal)
-  end
-
-  defp float_to_string(price, decimal) do
-    price
-    |> to_float(decimal)
-    |> Float.to_string()
-  end
 
   defp handle_poison_error(poison_error) do
     case poison_error do
