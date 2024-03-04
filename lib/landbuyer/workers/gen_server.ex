@@ -2,7 +2,6 @@ defmodule Landbuyer.Workers.GenServer do
   @moduledoc false
   use GenServer, restart: :transient
 
-  alias Landbuyer.Accounts
   alias Landbuyer.Workers.State
 
   def start_link(%State{name: name} = state) do
@@ -49,16 +48,16 @@ defmodule Landbuyer.Workers.GenServer do
   defp run_task(%State{account: account, trader: trader, data: %{strategy: strategy, counter: counter}} = state) do
     # Run the strategy
     events = strategy.run(account, trader)
+    name = format_ids(account.id, trader.id)
 
-    # Maybe do batch insert here?
-    # Maybe do insert in a task here?
-    Enum.each(events, fn {type, reason, message} ->
-      event_params = %{type: type, reason: Atom.to_string(reason), message: message}
+    Enum.each(events, fn
+      {type, reason, message} when type != :nothing ->
+        print_event(name, type, reason, message)
 
-      case Accounts.create_event(trader, event_params) do
-        {:ok, event} -> event
-        {:error, _reason} -> :error
-      end
+      {type, reason, message} ->
+        if rem(counter, 10) == 0 do
+          print_event(name, type, reason, message)
+        end
     end)
 
     # Increment counter
@@ -66,8 +65,16 @@ defmodule Landbuyer.Workers.GenServer do
   end
 
   defp format_ids(account_id, trader_id) do
-    account_id = String.pad_trailing("#{account_id}", 3, " ")
-    trader_id = String.pad_trailing("#{trader_id}", 3, " ")
+    account_id = String.pad_trailing("#{account_id}", 2, " ")
+    trader_id = String.pad_trailing("#{trader_id}", 2, " ")
     "A#{account_id}T#{trader_id}"
+  end
+
+  defp print_event(name, type, reason, message) do
+    IO.puts("#{name} | :#{Atom.to_string(type)} (:#{Atom.to_string(reason)})")
+
+    unless Enum.empty?(message) do
+      IO.puts("         #{inspect(message)}")
+    end
   end
 end
