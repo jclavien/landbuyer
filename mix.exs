@@ -47,12 +47,12 @@ defmodule Landbuyer.MixProject do
       {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
       {:finch, "~> 0.13"},
       {:jason, "~> 1.2"},
-      {:plug_cowboy, "~> 2.5"},
+      {:plug_cowboy, "~> 2.6"},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:styler, "~> 0.11", only: [:dev, :test], runtime: false},
       {:lucide_live_view, git: "https://github.com/abdelaz3r/lucide_live_view.git", tag: "v1.1"},
-      {:sparkline_svg, "~> 0.1.0"}
+      {:sparkline_svg, "~> 0.3.0"}
     ]
   end
 
