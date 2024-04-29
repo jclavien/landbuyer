@@ -15,7 +15,8 @@ defmodule Landbuyer.Schemas.Trader do
   @strategies [
     Landbuyer.Strategies.Empty,
     Landbuyer.Strategies.LandbuyerOrigin,
-    Landbuyer.Strategies.MitCleaner
+    Landbuyer.Strategies.MitCleaner,
+    Landbuyer.Strategies.TakeProfitUpdate
   ]
 
   @type t() :: %Trader{

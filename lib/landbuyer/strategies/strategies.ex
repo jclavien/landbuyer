@@ -49,7 +49,8 @@ defmodule Landbuyer.Strategies.Strategies do
     [
       Landbuyer.Strategies.Empty,
       Landbuyer.Strategies.LandbuyerOrigin,
-      Landbuyer.Strategies.MitCleaner
+      Landbuyer.Strategies.MitCleaner,
+      Landbuyer.Strategies.TakeProfitUpdate
     ]
   end
 end
