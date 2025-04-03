@@ -9,10 +9,7 @@ kill_signal    = "SIGTERM"
 swap_size_mb   = 512
 
 #[deploy]
-#  release_command = "/app/bin/migrate"
-
-[deploy]
-  release_command = "/app/bin/landbuyer eval \"IO.puts(:ok)\""
+#  release_command = "/app/bin/migrate"  # Commenté cette ligne
 
 [env]
   PHX_HOST = "landbuyer.fly.dev"
@@ -35,7 +32,6 @@ swap_size_mb   = 512
   cpu_kind  = "shared"
   cpus      = 1
   memory_mb = 256
-  
-#[processes]
-#   app = "/app/bin/landbuyer start"
 
+#[processes] # Commenté pour éviter d’utiliser un processus mal configuré
+#   app = "/app/bin/landbuyer start"   # Commenté cette ligne
