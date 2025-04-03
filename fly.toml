@@ -1,5 +1,3 @@
-# fly.toml app configuration file generated for landbuyer on 2023-12-18T18:42:58+01:00
-#
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
@@ -8,8 +6,10 @@ primary_region = "ams"
 kill_signal    = "SIGTERM"
 swap_size_mb   = 512
 
-#[deploy]
-#  release_command = "/app/bin/migrate"  # Commenté cette ligne
+
+
+[deploy]
+  release_command = "/app/bin/migrate"
 
 [env]
   PHX_HOST = "landbuyer.fly.dev"
@@ -32,6 +32,3 @@ swap_size_mb   = 512
   cpu_kind  = "shared"
   cpus      = 1
   memory_mb = 256
-
-#[processes] # Commenté pour éviter d’utiliser un processus mal configuré
-#   app = "/app/bin/landbuyer start"   # Commenté cette ligne
