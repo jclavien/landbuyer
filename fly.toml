@@ -11,6 +11,9 @@ swap_size_mb   = 512
 #[deploy]
 #  release_command = "/app/bin/migrate"
 
+[deploy]
+  release_command = "/app/bin/landbuyer eval \"IO.puts(:ok)\""
+
 [env]
   PHX_HOST = "landbuyer.fly.dev"
   PORT     = "8080"
@@ -33,5 +36,6 @@ swap_size_mb   = 512
   cpus      = 1
   memory_mb = 256
   
-[processes]
-  app = "/app/bin/landbuyer start"
+#[processes]
+#   app = "/app/bin/landbuyer start"
+
