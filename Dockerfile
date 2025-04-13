@@ -35,10 +35,6 @@ RUN mix compile
 COPY config/runtime.exs config/
 COPY rel rel
 
-# 👇 on prépare le script pour la release
-COPY rel/overlays/bin/server rel/overlays/bin/server
-RUN chmod +x rel/overlays/bin/server
-
 RUN mix release
 
 # --- RUN STAGE ---
@@ -61,13 +57,10 @@ ENV MIX_ENV="prod"
 # 👇 copie la release
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/landbuyer /app/
 
-# 👇 copie du script server avec droits pour nobody
-COPY --from=builder --chown=nobody:root /app/rel/overlays/bin/server /app/bin/server
-RUN chmod +x /app/bin/server
-
 USER nobody
 
-CMD ["/app/bin/server"]
+# 👇 démarre directement le binaire généré par `mix release`
+CMD ["/app/bin/landbuyer", "start"]
 
 ENV ECTO_IPV6=true
 ENV ERL_AFLAGS="-proto_dist inet6_tcp"
