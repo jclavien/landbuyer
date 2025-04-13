@@ -11,6 +11,7 @@ defmodule Landbuyer.MixProject do
       aliases: aliases(),
       deps: deps(),
       dialyzer: [plt_add_apps: [:mix]]
+      releases: releases()
     ]
   end
 
