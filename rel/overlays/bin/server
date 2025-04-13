@@ -1,2 +1,0 @@
-#!/bin/sh
-PHX_SERVER=true exec /app/bin/landbuyer start
