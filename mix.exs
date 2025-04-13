@@ -4,7 +4,7 @@ defmodule Landbuyer.MixProject do
   def project do
     [
       app: :landbuyer,
-      version: "1.0.9",  # Incrémenté
+      version: "1.0.11",  # Incrémenté
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
