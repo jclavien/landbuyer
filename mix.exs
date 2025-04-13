@@ -4,7 +4,7 @@ defmodule Landbuyer.MixProject do
   def project do
     [
       app: :landbuyer,
-      version: "1.0.1",
+      version: "1.0.2", # 👈 mise à jour pour forcer rebuild
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -64,18 +64,12 @@ defmodule Landbuyer.MixProject do
     [
       landbuyer: [
         include_executables_for: [:unix],
-        steps: [:assemble, &copy_overlays/1, :tar],
-        config_providers: [],
-        cookie: "landbuyer_cookie",
+        steps: [:assemble, :tar],
         overlays: [
           {:copy, "rel/overlays/bin/server", "bin/server"},
           {:copy, "rel/overlays/bin/migrate", "bin/migrate"}
         ]
       ]
     ]
-  end
-
-  defp copy_overlays(release) do
-    Mix.Release.copy_overlays(release)
   end
 end
