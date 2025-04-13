@@ -1,3 +1,2 @@
 #!/bin/sh
-cd -P -- "$(dirname -- "$0")"
-PHX_SERVER=true exec ./landbuyer start
+PHX_SERVER=true exec /app/bin/landbuyer start
