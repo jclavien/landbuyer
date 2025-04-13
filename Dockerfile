@@ -35,7 +35,7 @@ RUN mix compile
 COPY config/runtime.exs config/
 COPY rel rel
 
-# 👇 copie le script dans le builder pour inclusion dans la release
+# 👇 on prépare le script pour la release
 COPY rel/overlays/bin/server rel/overlays/bin/server
 RUN chmod +x rel/overlays/bin/server
 
@@ -58,10 +58,10 @@ RUN chown nobody /app
 
 ENV MIX_ENV="prod"
 
-# 👇 copie toute la release
+# 👇 copie la release
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/landbuyer /app/
 
-# 👇 copie manuelle du script `server` avec les bons droits pour USER nobody
+# 👇 copie du script server avec droits pour nobody
 COPY --from=builder --chown=nobody:root /app/rel/overlays/bin/server /app/bin/server
 RUN chmod +x /app/bin/server
 
