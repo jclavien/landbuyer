@@ -1,3 +1,4 @@
+# --- BUILD STAGE ---
 ARG ELIXIR_VERSION=1.14.0
 ARG OTP_VERSION=25.1.1
 ARG DEBIAN_VERSION=bullseye-20220801-slim
@@ -32,14 +33,15 @@ RUN mix assets.deploy
 RUN mix compile
 
 COPY config/runtime.exs config/
+COPY rel rel
 
-# 👉 On injecte le fichier ici AVANT mix release
+# 👇 assure que le script est là dans builder
 COPY rel/overlays/bin/server rel/overlays/bin/server
 RUN chmod +x rel/overlays/bin/server
 
-COPY rel rel
 RUN mix release
 
+# --- RUN STAGE ---
 FROM ${RUNNER_IMAGE}
 
 RUN apt-get update -y && apt-get install -y libstdc++6 openssl libncurses5 locales \
@@ -56,7 +58,12 @@ RUN chown nobody /app
 
 ENV MIX_ENV="prod"
 
+# 👇 copie la release
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/landbuyer /app/
+
+# 👇 copie manuellement le script "server" depuis builder
+COPY --from=builder /app/rel/overlays/bin/server /app/bin/server
+RUN chmod +x /app/bin/server
 
 USER nobody
 
