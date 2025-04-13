@@ -1,23 +1,20 @@
 defmodule Landbuyer.MixProject do
   use Mix.Project
 
-def project do
-  [
-    app: :landbuyer,
-    version: "1.0.1",   # 👈 version mise à jour
-    elixir: "~> 1.14",
-    elixirc_paths: elixirc_paths(Mix.env()),
-    start_permanent: Mix.env() == :prod,
-    aliases: aliases(),
-    deps: deps(),
-    dialyzer: [plt_add_apps: [:mix]],
-    releases: releases()
-  ]
-end
+  def project do
+    [
+      app: :landbuyer,
+      version: "1.0.1",
+      elixir: "~> 1.14",
+      elixirc_paths: elixirc_paths(Mix.env()),
+      start_permanent: Mix.env() == :prod,
+      aliases: aliases(),
+      deps: deps(),
+      dialyzer: [plt_add_apps: [:mix]],
+      releases: releases()
+    ]
+  end
 
-  # Configuration for the OTP application.
-  #
-  # Type `mix help compile.app` for more information.
   def application do
     [
       mod: {Landbuyer.Application, []},
@@ -25,13 +22,9 @@ end
     ]
   end
 
-  # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  # Specifies your project dependencies.
-  #
-  # Type `mix help deps` for examples and options.
   defp deps do
     [
       {:phoenix, "~> 1.7.10"},
@@ -57,12 +50,6 @@ end
     ]
   end
 
-  # Aliases are shortcuts or tasks specific to the current project.
-  # For example, to install project dependencies and perform other setup tasks, run:
-  #
-  #     $ mix setup
-  #
-  # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
       setup: ["deps.get", "ecto.setup"],
@@ -72,16 +59,23 @@ end
       "assets.deploy": ["tailwind default --minify", "esbuild default --minify", "phx.digest"]
     ]
   end
+
   defp releases do
     [
       landbuyer: [
         include_executables_for: [:unix],
-        steps: [:assemble, :tar],
+        steps: [:assemble, &copy_overlays/1, :tar],
+        config_providers: [],
+        cookie: "landbuyer_cookie",
         overlays: [
           {:copy, "rel/overlays/bin/server", "bin/server"},
           {:copy, "rel/overlays/bin/migrate", "bin/migrate"}
         ]
       ]
     ]
+  end
+
+  defp copy_overlays(release) do
+    Mix.Release.copy_overlays(release)
   end
 end
