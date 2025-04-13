@@ -1,19 +1,19 @@
 defmodule Landbuyer.MixProject do
   use Mix.Project
 
-  def project do
-    [
-      app: :landbuyer,
-      version: "1.0.1",
-      elixir: "~> 1.14",
-      elixirc_paths: elixirc_paths(Mix.env()),
-      start_permanent: Mix.env() == :prod,
-      aliases: aliases(),
-      deps: deps(),
-      dialyzer: [plt_add_apps: [:mix]]
-      releases: releases()
-    ]
-  end
+def project do
+  [
+    app: :landbuyer,
+    version: "1.0.1",   # 👈 version mise à jour
+    elixir: "~> 1.14",
+    elixirc_paths: elixirc_paths(Mix.env()),
+    start_permanent: Mix.env() == :prod,
+    aliases: aliases(),
+    deps: deps(),
+    dialyzer: [plt_add_apps: [:mix]],
+    releases: releases()
+  ]
+end
 
   # Configuration for the OTP application.
   #
