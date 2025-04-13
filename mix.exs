@@ -71,4 +71,16 @@ defmodule Landbuyer.MixProject do
       "assets.deploy": ["tailwind default --minify", "esbuild default --minify", "phx.digest"]
     ]
   end
+  defp releases do
+    [
+      landbuyer: [
+        include_executables_for: [:unix],
+        steps: [:assemble, :tar],
+        overlays: [
+          {:copy, "rel/overlays/bin/server", "bin/server"},
+          {:copy, "rel/overlays/bin/migrate", "bin/migrate"}
+        ]
+      ]
+    ]
+  end
 end
