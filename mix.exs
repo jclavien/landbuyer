@@ -4,7 +4,7 @@ defmodule Landbuyer.MixProject do
   def project do
     [
       app: :landbuyer,
-      version: "1.0.6",  # Incrémenté après correction
+      version: "1.0.7",  # Incrémenté avec overlays réactivé
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -64,12 +64,10 @@ defmodule Landbuyer.MixProject do
     [
       landbuyer: [
         include_executables_for: [:unix],
-        steps: [:assemble, :tar]
-        # 🔧 Désactivé car rel/overlays/bin/server n'existe pas (sinon erreur au boot)
-        # overlays: [
-        #   {:copy, "rel/overlays/bin/server", "bin/server"},
-        #   {:copy, "rel/overlays/bin/migrate", "bin/migrate"}
-        # ]
+        steps: [:assemble, :tar],
+        overlays: [
+          {:copy, "rel/overlays/bin/server", "bin/server"}
+        ]
       ]
     ]
   end
