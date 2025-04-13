@@ -4,14 +4,14 @@ defmodule Landbuyer.MixProject do
   def project do
     [
       app: :landbuyer,
-      version: "1.0.3",  # 👈 nouvelle version pour forcer le rebuild
+      version: "1.0.4",  # ⬅️ Mets à jour la version si besoin
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
-      dialyzer: [plt_add_apps: [:mix]]
-      # 👇❌ NE PAS mettre "releases: releases()" ici !
+      dialyzer: [plt_add_apps: [:mix]],
+      releases: releases()
     ]
   end
 
