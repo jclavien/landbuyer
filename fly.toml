@@ -9,7 +9,7 @@ swap_size_mb   = 512
 
 
 [deploy]
-  release_command = "/app/bin/migrate"
+#  release_command = "/app/bin/migrate"
 
 [env]
   PHX_HOST = "landbuyer.fly.dev"
