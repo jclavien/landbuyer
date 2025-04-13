@@ -2,9 +2,6 @@ app = "landbuyer"
 
 primary_region = "ams"
 
-[build]
-  image = "landbuyer"
-
 [env]
   PHX_SERVER = "true"
   MIX_ENV = "prod"
