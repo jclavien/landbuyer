@@ -1,15 +1,13 @@
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
+# fly.toml file for Landbuyer
 
-app            = "landbuyer"
+app = "landbuyer"
 primary_region = "ams"
-kill_signal    = "SIGTERM"
-swap_size_mb   = 512
+kill_signal = "SIGTERM"
+swap_size_mb = 512
 
-
-
-[deploy]
-#  release_command = "/app/bin/migrate"
+# Optionnel : tu peux supprimer complètement cette section si tu ne fais pas de release spécifique
+#[deploy]
+# release_command = "/app/bin/landbuyer eval \"IO.puts('Release ran successfully')\""
 
 [env]
   PHX_HOST = "landbuyer.fly.dev"
