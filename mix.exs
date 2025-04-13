@@ -4,7 +4,7 @@ defmodule Landbuyer.MixProject do
   def project do
     [
       app: :landbuyer,
-      version: "1.0.5",  # ⬅️ Version incrémentée
+      version: "1.0.6",  # Incrémenté
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -64,11 +64,13 @@ defmodule Landbuyer.MixProject do
     [
       landbuyer: [
         include_executables_for: [:unix],
-        steps: [:assemble, :tar],
-        overlays: [
-          {:copy, "rel/overlays/bin/server", "bin/server"},
-          {:copy, "rel/overlays/bin/migrate", "bin/migrate"}
-        ]
+        steps: [:assemble, :tar]
+        # 🚨 Overlays désactivés pour éviter erreur si fichiers absents
+        # Décommente ce bloc si les fichiers existent réellement
+        # overlays: Enum.filter([
+        #   File.exists?("rel/overlays/bin/server") && {:copy, "rel/overlays/bin/server", "bin/server"},
+        #   File.exists?("rel/overlays/bin/migrate") && {:copy, "rel/overlays/bin/migrate", "bin/migrate"}
+        # ], & &1)
       ]
     ]
   end
