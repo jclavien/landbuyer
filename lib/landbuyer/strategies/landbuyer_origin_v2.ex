@@ -1,5 +1,6 @@
 defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
-  @moduledoc """
+IO.puts(">>> LandbuyerOriginV2 LOADED") 
+@moduledoc """
   Landbuyer Origin V2 strategy.
 
   Amélioré pour :
