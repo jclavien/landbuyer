@@ -46,6 +46,7 @@ defmodule Landbuyer.Strategies.Strategies do
 
   @spec all() :: [atom()]
   def all do
+    _ = Landbuyer.Strategies.LandbuyerOriginV2
     [
       Landbuyer.Strategies.Empty,
       Landbuyer.Strategies.LandbuyerOrigin,
