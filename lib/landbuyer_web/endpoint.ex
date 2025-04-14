@@ -21,7 +21,8 @@ defmodule LandbuyerWeb.Endpoint do
     at: "/",
     from: :landbuyer,
     gzip: false,
-    only: LandbuyerWeb.static_paths()
+    only: LandbuyerWeb.static_paths(),
+    cache_static_manifest: "priv/static/manifest.json"
   )
 
   # Code reloading can be explicitly enabled under the
