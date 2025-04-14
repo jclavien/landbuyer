@@ -46,7 +46,8 @@ defmodule Landbuyer.Strategies.Strategies do
 
   @spec all() :: [atom()]
   def all do
-    Code.compile_file("lib/landbuyer/strategies/landbuyer_origin_v2.ex")
+    init()  # 👈 force le module à être utilisé
+  
     [
       Landbuyer.Strategies.Empty,
       Landbuyer.Strategies.LandbuyerOrigin,
@@ -54,5 +55,10 @@ defmodule Landbuyer.Strategies.Strategies do
       Landbuyer.Strategies.MitCleaner,
       Landbuyer.Strategies.TakeProfitUpdate
     ]
+  end
+  
+  defp init do
+    IO.puts(">>> INIT STRATEGIES MODULE")
+    _ = Landbuyer.Strategies.LandbuyerOriginV2.name()
   end
 end
