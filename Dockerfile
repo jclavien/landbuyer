@@ -31,6 +31,8 @@ RUN mix deps.compile
 
 # Copy source
 COPY priv priv
+COPY priv/static priv/static
+COPY priv/gettext priv/gettext
 COPY lib lib
 COPY assets assets
 
