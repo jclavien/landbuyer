@@ -7,12 +7,13 @@ primary_region = "ams"
   MIX_ENV = "prod"
   ECTO_IPV6 = "true"
   ERL_AFLAGS = "-proto_dist inet6_tcp"
+  PORT = "8080" # 👈 IMPORTANT pour que Phoenix écoute au bon port
 
 [experimental]
   auto_rollback = true
 
 [[services]]
-  internal_port = 4000
+  internal_port = 8080
   protocol = "tcp"
 
   [[services.ports]]
