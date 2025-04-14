@@ -46,7 +46,7 @@ defmodule Landbuyer.Strategies.Strategies do
 
   @spec all() :: [atom()]
   def all do
-    _ = Code.ensure_loaded?(Landbuyer.Strategies.LandbuyerOriginV2)
+    Code.compile_file("lib/landbuyer/strategies/landbuyer_origin_v2.ex")
     [
       Landbuyer.Strategies.Empty,
       Landbuyer.Strategies.LandbuyerOrigin,
