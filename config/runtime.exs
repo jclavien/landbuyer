@@ -27,17 +27,18 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
-  host = System.get_env("PHX_HOST") || "example.com"
+  host = System.get_env("PHX_HOST") || "landbuyer.fly.dev"
   port = 8080
 
   config :landbuyer, LandbuyerWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
-      ip: {0, 0, 0, 0, 0, 0, 0, 0},
+      ip: {0, 0, 0, 0},  # ✅ IPv4 pour Fly.io
       port: port
     ],
     secret_key_base: secret_key_base,
-    cache_static_manifest: "priv/static/cache_manifest.json" # ✅ Ajout critique pour les assets
+    cache_static_manifest: "priv/static/cache_manifest.json",
+    check_origin: ["https://landbuyer.fly.dev"]
 
   config :landbuyer,
     username: System.fetch_env!("ADMIN_USERNAME"),
