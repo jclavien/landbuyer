@@ -1,9 +1,5 @@
 import Config
 
-if System.get_env("PHX_SERVER") do
-  config :landbuyer, LandbuyerWeb.Endpoint, server: true
-end
-
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
@@ -15,7 +11,6 @@ if config_env() == :prod do
   maybe_ipv6 = if System.get_env("ECTO_IPV6"), do: [:inet6], else: []
 
   config :landbuyer, Landbuyer.Repo,
-    # ssl: true,
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
     socket_options: maybe_ipv6
@@ -31,11 +26,9 @@ if config_env() == :prod do
   port = 8080
 
   config :landbuyer, LandbuyerWeb.Endpoint,
+    server: true,  # ✅ FORCÉ ici, plus besoin de PHX_SERVER
     url: [host: host, port: 443, scheme: "https"],
-    http: [
-      ip: {0, 0, 0, 0},  # ✅ IPv4 pour Fly.io
-      port: port
-    ],
+    http: [ip: {0, 0, 0, 0}, port: port],
     secret_key_base: secret_key_base,
     cache_static_manifest: "priv/static/cache_manifest.json",
     check_origin: ["https://landbuyer.fly.dev"]
