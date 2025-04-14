@@ -43,6 +43,7 @@ COPY config/runtime.exs config/
 
 # Copy rel directory and build release
 COPY rel rel
+RUN apt-get update -y && apt-get install -y dos2unix && find rel/ -type f -exec dos2unix {} +
 RUN mix release
 
 # --- RUN STAGE ---
