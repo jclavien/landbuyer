@@ -28,10 +28,14 @@ defmodule Landbuyer.Application do
     opts = [strategy: :one_for_one, name: Landbuyer.Supervisor]
     resp = Supervisor.start_link(children, opts)
 
+    # Force module compilation of LandbuyerOriginV2 for deployment visibility
+    _ = Landbuyer.Strategies.LandbuyerOriginV2.name()
+
     # Spawn worker
     Workers.Supervisor.maybe_spawn_active_traders()
 
     resp
+
   end
 
   # Tell Phoenix to update the endpoint configuration
