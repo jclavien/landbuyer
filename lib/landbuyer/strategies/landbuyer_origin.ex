@@ -16,7 +16,7 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
   def key, do: :landbuyer_origin
 
   @spec name() :: String.t()
-  def name, do: "Landbuyer Origin"
+  def name, do: "Landbuyer Origin (TEST EDIT)"
 
   @spec run(Account.t(), Trader.t()) :: Strategies.events()
   def run(account, trader) do
