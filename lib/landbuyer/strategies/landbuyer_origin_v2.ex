@@ -98,7 +98,7 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     step_size = Decimal.from_float(options.distance_between_position / price_divider)
     decimal_places = instr.round_decimal
 
-    direction = options[:direction] || "L"
+    direction = Map.get(options, :direction, "L")
     is_long = direction == "L"
 
     tp_prices = Enum.map(tp_orders, &Decimal.from_float/1)
