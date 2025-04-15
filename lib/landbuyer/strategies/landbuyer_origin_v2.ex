@@ -2,11 +2,11 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
   @moduledoc """
   Landbuyer Origin V2 strategy.
 
-  Améliorée pour :
-  - Espacement fixe en grille
+  Amélioré pour :
+  - Espacement d'ordres fixe en grille
   - Placement basé sur TP existants
   - Support LONG / SHORT via paramètre `direction`
-  - Évite de replacer un ordre déjà existant
+  - Amorçage automatique autour du prix du marché si aucune position / ordre
   """
 
   @behaviour Landbuyer.Strategies.Strategies
@@ -14,6 +14,8 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
   alias Landbuyer.Schemas.Account
   alias Landbuyer.Schemas.Trader
   alias Landbuyer.Strategies.Strategies
+
+  require Logger
 
   @spec key() :: atom()
   def key, do: :landbuyer_origin_v2
@@ -30,7 +32,6 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     end
   end
 
-  @spec get_market_price(Account.t(), Trader.t()) :: {:ok, float()} | Strategies.events()
   defp get_market_price(account, %{instrument: instr} = trader) do
     baseurl = "https://#{account.hostname}/v3/accounts/#{account.oanda_id}"
 
@@ -50,7 +51,6 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     end
   end
 
-  @spec get_orders(Account.t(), Trader.t()) :: {:ok, list(), list()} | Strategies.events()
   defp get_orders(account, %{instrument: instr} = trader) do
     baseurl = "https://#{account.hostname}/v3/accounts/#{account.oanda_id}"
 
@@ -79,11 +79,38 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     end
   end
 
-  @spec compute_orders(float(), list(), list(), Trader.t()) :: {:ok, list()} | Strategies.events()
-  defp compute_orders(_market_price, _mit_orders, [], _trader),
-    do: [{:nothing, :waiting_for_first_executed_order, %{}}]
+  defp compute_orders(market_price, [], [], %{instrument: instr, options: options}) do
+    price_divider = :math.pow(10, instr.round_decimal)
+    step_size = options.distance_between_position / price_divider
 
-  defp compute_orders(_market_price, mit_orders, tp_orders, %{
+    base = ceil(market_price * price_divider) / price_divider
+    other = Float.round(base - step_size, instr.round_decimal)
+
+    orders_to_place = [
+      {base, base + options.distance_on_take_profit / price_divider},
+      {other, other + options.distance_on_take_profit / price_divider}
+    ]
+
+    {:ok,
+     Enum.map(orders_to_place, fn {entry, tp} ->
+       %{
+         type: "MARKET_IF_TOUCHED",
+         instrument: instr.currency_pair,
+         units: options.position_amount,
+         price: float_to_string(entry, instr.round_decimal),
+         timeInForce: "GFD",
+         takeProfitOnFill: %{
+           timeInForce: "GTC",
+           price: float_to_string(tp, instr.round_decimal)
+         }
+       }
+     end)}
+  end
+
+  defp compute_orders(_market_price, _mit_orders, [], _trader), do:
+    [{:nothing, :waiting_for_first_executed_order, %{}}]
+
+  defp compute_orders(_market_price, _mit_orders, tp_orders, %{
          instrument: instr,
          options: options
        }) do
@@ -92,11 +119,12 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     step_size = Decimal.from_float(options.distance_between_position / price_divider)
     decimal_places = instr.round_decimal
 
-    direction = Map.get(options, :direction, "L")
+    direction = options[:direction] || "L"
     is_long = direction == "L"
 
-    # Convert TP en décimal
-    tp_prices = Enum.map(tp_orders, &Decimal.from_float/1)
+    tp_prices =
+      tp_orders
+      |> Enum.map(&Decimal.from_float/1)
 
     extreme_tp =
       case is_long do
@@ -113,14 +141,13 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     new_levels =
       for i <- 1..options.max_order do
         offset = Decimal.mult(step_size, Decimal.new(i))
-
         case is_long do
           true -> Decimal.sub(base_entry, offset)
           false -> Decimal.add(base_entry, offset)
         end
       end
 
-    existing_base_entries_from_tp =
+    existing_base_entries =
       tp_prices
       |> Enum.map(fn tp ->
         case is_long do
@@ -129,20 +156,11 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
         end
       end)
 
-    existing_mit =
-      mit_orders
-      |> Enum.map(&Decimal.from_float/1)
-
     levels_to_place =
       new_levels
       |> Enum.reject(fn lvl ->
-        rounded_lvl = Decimal.round(lvl, decimal_places)
-
-        Enum.any?(existing_base_entries_from_tp, fn existing ->
-          Decimal.round(existing, decimal_places) == rounded_lvl
-        end) or
-        Enum.any?(existing_mit, fn existing ->
-          Decimal.round(existing, decimal_places) == rounded_lvl
+        Enum.any?(existing_base_entries, fn existing ->
+          Decimal.equal?(Decimal.round(existing, decimal_places), Decimal.round(lvl, decimal_places))
         end)
       end)
 
@@ -171,8 +189,9 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     {:ok, orders_to_place}
   end
 
-  @spec post_orders(list(), Account.t(), Trader.t()) :: Strategies.events()
-  defp post_orders([], _account, _trader), do: [{:nothing, :no_orders_to_place, %{}}]
+  defp post_orders([], _account, _trader) do
+    [{:nothing, :no_orders_to_place, %{}}]
+  end
 
   defp post_orders(orders, account, trader) do
     opts = [timeout: trader.rate_ms, on_timeout: :kill_task, zip_input_on_exit: true]
@@ -185,7 +204,6 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     end)
   end
 
-  @spec post_order(map(), Account.t(), Trader.t()) :: Strategies.event()
   defp post_order(order, account, trader) do
     request = %HTTPoison.Request{
       method: :post,
@@ -208,23 +226,15 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     end
   end
 
-  # Helpers
-
   defp to_float(price, decimal) when is_binary(price) do
     price
     |> String.to_float()
     |> to_float(decimal)
   end
 
-  defp to_float(price, decimal) do
-    Float.round(price, decimal)
-  end
+  defp to_float(price, decimal), do: Float.round(price, decimal)
 
-  defp float_to_string(price, decimal) do
-    price
-    |> to_float(decimal)
-    |> Float.to_string()
-  end
+  defp float_to_string(price, decimal), do: Float.round(price, decimal) |> Float.to_string()
 
   defp handle_poison_error(poison_error) do
     case poison_error do
