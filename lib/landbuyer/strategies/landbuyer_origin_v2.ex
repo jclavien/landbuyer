@@ -1,13 +1,12 @@
 defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
-  IO.puts(">>> LandbuyerOriginV2 LOADED")
-
   @moduledoc """
   Landbuyer Origin V2 strategy.
 
-  Amélioré pour :
-  - Espacement d'ordres fixe en grille
+  Améliorée pour :
+  - Espacement fixe en grille
   - Placement basé sur TP existants
   - Support LONG / SHORT via paramètre `direction`
+  - Évite de replacer un ordre déjà existant
   """
 
   @behaviour Landbuyer.Strategies.Strategies
@@ -45,9 +44,7 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.request(request),
          {:ok, %{"prices" => prices}} <- Poison.decode(body) do
       %{"closeoutAsk" => market_price} = hd(prices)
-      mp = to_float(market_price, instr.round_decimal)
-      IO.inspect(mp, label: ">>> market_price")
-      {:ok, mp}
+      {:ok, to_float(market_price, instr.round_decimal)}
     else
       poison_error -> [handle_poison_error(poison_error)]
     end
@@ -76,9 +73,6 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
         |> Enum.filter(fn %{"type" => type} -> type == "TAKE_PROFIT" end)
         |> Enum.map(fn %{"price" => price} -> to_float(price, instr.round_decimal) end)
 
-      IO.inspect(mit_orders, label: ">>> mit_orders")
-      IO.inspect(tp_orders, label: ">>> tp_orders")
-
       {:ok, mit_orders, tp_orders}
     else
       poison_error -> [handle_poison_error(poison_error)]
@@ -86,10 +80,10 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
   end
 
   @spec compute_orders(float(), list(), list(), Trader.t()) :: {:ok, list()} | Strategies.events()
-  defp compute_orders(_market_price, _mit_orders, [], _trader), do:
-    [{:nothing, :waiting_for_first_executed_order, %{}}]
+  defp compute_orders(_market_price, _mit_orders, [], _trader),
+    do: [{:nothing, :waiting_for_first_executed_order, %{}}]
 
-  defp compute_orders(_market_price, _mit_orders, tp_orders, %{
+  defp compute_orders(_market_price, mit_orders, tp_orders, %{
          instrument: instr,
          options: options
        }) do
@@ -101,6 +95,7 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     direction = Map.get(options, :direction, "L")
     is_long = direction == "L"
 
+    # Convert TP en décimal
     tp_prices = Enum.map(tp_orders, &Decimal.from_float/1)
 
     extreme_tp =
@@ -118,33 +113,42 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     new_levels =
       for i <- 1..options.max_order do
         offset = Decimal.mult(step_size, Decimal.new(i))
+
         case is_long do
           true -> Decimal.sub(base_entry, offset)
           false -> Decimal.add(base_entry, offset)
         end
       end
 
-    IO.inspect(new_levels, label: ">>> new_levels")
-
-    existing_base_entries =
-      Enum.map(tp_prices, fn tp ->
+    existing_base_entries_from_tp =
+      tp_prices
+      |> Enum.map(fn tp ->
         case is_long do
           true -> Decimal.sub(tp, tp_distance)
           false -> Decimal.add(tp, tp_distance)
         end
       end)
 
+    existing_mit =
+      mit_orders
+      |> Enum.map(&Decimal.from_float/1)
+
     levels_to_place =
-      Enum.reject(new_levels, fn lvl ->
-        Enum.any?(existing_base_entries, fn existing ->
-          Decimal.equal?(Decimal.round(existing, decimal_places), Decimal.round(lvl, decimal_places))
+      new_levels
+      |> Enum.reject(fn lvl ->
+        rounded_lvl = Decimal.round(lvl, decimal_places)
+
+        Enum.any?(existing_base_entries_from_tp, fn existing ->
+          Decimal.round(existing, decimal_places) == rounded_lvl
+        end) or
+        Enum.any?(existing_mit, fn existing ->
+          Decimal.round(existing, decimal_places) == rounded_lvl
         end)
       end)
 
-    IO.inspect(levels_to_place, label: ">>> levels_to_place")
-
     orders_to_place =
-      Enum.map(levels_to_place, fn entry_price ->
+      levels_to_place
+      |> Enum.map(fn entry_price ->
         tp_price =
           case is_long do
             true -> Decimal.add(entry_price, tp_distance)
@@ -164,15 +168,11 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
         }
       end)
 
-    IO.inspect(orders_to_place, label: ">>> orders_to_place")
-
     {:ok, orders_to_place}
   end
 
   @spec post_orders(list(), Account.t(), Trader.t()) :: Strategies.events()
-  defp post_orders([], _account, _trader) do
-    [{:nothing, :no_orders_to_place, %{}}]
-  end
+  defp post_orders([], _account, _trader), do: [{:nothing, :no_orders_to_place, %{}}]
 
   defp post_orders(orders, account, trader) do
     opts = [timeout: trader.rate_ms, on_timeout: :kill_task, zip_input_on_exit: true]
@@ -187,8 +187,6 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
 
   @spec post_order(map(), Account.t(), Trader.t()) :: Strategies.event()
   defp post_order(order, account, trader) do
-    IO.inspect(order, label: ">>> posting_order")
-
     request = %HTTPoison.Request{
       method: :post,
       url: "https://#{account.hostname}/v3/accounts/#{account.oanda_id}/orders",
@@ -206,7 +204,6 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
         {:success, :order_placed, %{request_id: String.to_integer(request_id), price: order.price}}
 
       poison_error ->
-        IO.inspect(poison_error, label: ">>> poison_error")
         handle_poison_error(poison_error)
     end
   end
