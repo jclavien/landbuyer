@@ -1,4 +1,4 @@
-defmodule Landbuyer.Strategies.LandbuyerOrigin do
+defmodule Landbuyer.Strategies.LandbuyerOriginClone do
   @moduledoc """
   Landbuyer Origin strategy.
 
@@ -13,10 +13,10 @@ defmodule Landbuyer.Strategies.LandbuyerOrigin do
   alias Landbuyer.Strategies.Strategies
 
   @spec key() :: atom()
-  def key, do: :landbuyer_origin
+  def key, do: :landbuyer_origin_clone
 
   @spec name() :: String.t()
-  def name, do: "Landbuyer Origin"
+  def name, do: "Landbuyer Origin Clone"
 
   @spec run(Account.t(), Trader.t()) :: Strategies.events()
   def run(account, trader) do
