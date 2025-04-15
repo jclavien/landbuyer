@@ -1,6 +1,7 @@
 defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
-IO.puts(">>> LandbuyerOriginV2 LOADED") 
-@moduledoc """
+  IO.puts(">>> LandbuyerOriginV2 LOADED")
+
+  @moduledoc """
   Landbuyer Origin V2 strategy.
 
   Amélioré pour :
@@ -44,7 +45,9 @@ IO.puts(">>> LandbuyerOriginV2 LOADED")
     with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.request(request),
          {:ok, %{"prices" => prices}} <- Poison.decode(body) do
       %{"closeoutAsk" => market_price} = hd(prices)
-      {:ok, to_float(market_price, instr.round_decimal)}
+      mp = to_float(market_price, instr.round_decimal)
+      IO.inspect(mp, label: ">>> market_price")
+      {:ok, mp}
     else
       poison_error -> [handle_poison_error(poison_error)]
     end
@@ -73,6 +76,9 @@ IO.puts(">>> LandbuyerOriginV2 LOADED")
         |> Enum.filter(fn %{"type" => type} -> type == "TAKE_PROFIT" end)
         |> Enum.map(fn %{"price" => price} -> to_float(price, instr.round_decimal) end)
 
+      IO.inspect(mit_orders, label: ">>> mit_orders")
+      IO.inspect(tp_orders, label: ">>> tp_orders")
+
       {:ok, mit_orders, tp_orders}
     else
       poison_error -> [handle_poison_error(poison_error)]
@@ -95,10 +101,7 @@ IO.puts(">>> LandbuyerOriginV2 LOADED")
     direction = options[:direction] || "L"
     is_long = direction == "L"
 
-    # 1. Prendre le TP extrême selon direction
-    tp_prices =
-      tp_orders
-      |> Enum.map(&Decimal.from_float/1)
+    tp_prices = Enum.map(tp_orders, &Decimal.from_float/1)
 
     extreme_tp =
       case is_long do
@@ -106,14 +109,12 @@ IO.puts(">>> LandbuyerOriginV2 LOADED")
         false -> Enum.max(tp_prices)
       end
 
-    # 2. En déduire le prix théorique d'entrée du trade le plus extrême
     base_entry =
       case is_long do
         true -> Decimal.sub(extreme_tp, tp_distance)
         false -> Decimal.add(extreme_tp, tp_distance)
       end
 
-    # 3. Construire une grille d'entrée de `N` ordres supplémentaires
     new_levels =
       for i <- 1..options.max_order do
         offset = Decimal.mult(step_size, Decimal.new(i))
@@ -123,10 +124,10 @@ IO.puts(">>> LandbuyerOriginV2 LOADED")
         end
       end
 
-    # 4. Vérifier s'il existe déjà un TP pour ce niveau
+    IO.inspect(new_levels, label: ">>> new_levels")
+
     existing_base_entries =
-      tp_prices
-      |> Enum.map(fn tp ->
+      Enum.map(tp_prices, fn tp ->
         case is_long do
           true -> Decimal.sub(tp, tp_distance)
           false -> Decimal.add(tp, tp_distance)
@@ -134,17 +135,16 @@ IO.puts(">>> LandbuyerOriginV2 LOADED")
       end)
 
     levels_to_place =
-      new_levels
-      |> Enum.reject(fn lvl ->
+      Enum.reject(new_levels, fn lvl ->
         Enum.any?(existing_base_entries, fn existing ->
           Decimal.equal?(Decimal.round(existing, decimal_places), Decimal.round(lvl, decimal_places))
         end)
       end)
 
-    # 5. Générer les ordres à placer
+    IO.inspect(levels_to_place, label: ">>> levels_to_place")
+
     orders_to_place =
-      levels_to_place
-      |> Enum.map(fn entry_price ->
+      Enum.map(levels_to_place, fn entry_price ->
         tp_price =
           case is_long do
             true -> Decimal.add(entry_price, tp_distance)
@@ -163,6 +163,8 @@ IO.puts(">>> LandbuyerOriginV2 LOADED")
           }
         }
       end)
+
+    IO.inspect(orders_to_place, label: ">>> orders_to_place")
 
     {:ok, orders_to_place}
   end
@@ -185,6 +187,8 @@ IO.puts(">>> LandbuyerOriginV2 LOADED")
 
   @spec post_order(map(), Account.t(), Trader.t()) :: Strategies.event()
   defp post_order(order, account, trader) do
+    IO.inspect(order, label: ">>> posting_order")
+
     request = %HTTPoison.Request{
       method: :post,
       url: "https://#{account.hostname}/v3/accounts/#{account.oanda_id}/orders",
@@ -202,6 +206,7 @@ IO.puts(">>> LandbuyerOriginV2 LOADED")
         {:success, :order_placed, %{request_id: String.to_integer(request_id), price: order.price}}
 
       poison_error ->
+        IO.inspect(poison_error, label: ">>> poison_error")
         handle_poison_error(poison_error)
     end
   end
