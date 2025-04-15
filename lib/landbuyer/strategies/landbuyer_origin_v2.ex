@@ -7,6 +7,7 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
   - Placement basé sur TP existants
   - Support LONG / SHORT via paramètre `direction`
   - Amorçage intelligent en l'absence de positions / ordres
+  - Reprise de la grille si le marché décroche au-delà d'un seuil, tout en respectant l'alignement de grille
   """
 
   @behaviour Landbuyer.Strategies.Strategies
@@ -78,81 +79,109 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
     end
   end
 
-  defp compute_orders(market_price, [], [], %{instrument: instr, options: opts}) do
-    step = opts.distance_between_position / :math.pow(10, instr.round_decimal)
-    rounded = ceil(market_price * :math.pow(10, instr.round_decimal)) / :math.pow(10, instr.round_decimal)
-
-    range = -10..10
-
-    orders =
-      Enum.map(range, fn i ->
-        price = Float.round(rounded + i * step, instr.round_decimal)
-        tp_price = Float.round(price + opts.distance_on_take_profit / :math.pow(10, instr.round_decimal), instr.round_decimal)
-
-        %{
-          type: "MARKET_IF_TOUCHED",
-          instrument: instr.currency_pair,
-          units: opts.position_amount,
-          price: Float.to_string(price),
-          timeInForce: "GFD",
-          takeProfitOnFill: %{
-            timeInForce: "GTC",
-            price: Float.to_string(tp_price)
-          }
-        }
-      end)
-
-    {:ok, orders}
-  end
-
-  defp compute_orders(_market_price, _mit_orders, [], _trader),
-    do: [{:nothing, :waiting_for_first_executed_order, %{}}]
-
-  defp compute_orders(_market_price, mit_orders, tp_orders, %{instrument: instr, options: opts}) do
+  defp compute_orders(market_price, mit_orders, tp_orders, %{instrument: instr, options: opts}) do
     price_divider = :math.pow(10, instr.round_decimal)
     tp_distance = opts.distance_on_take_profit / price_divider
     step_size = opts.distance_between_position / price_divider
+    decimal = instr.round_decimal
 
-    tp_base_prices = Enum.map(tp_orders, &Float.round(&1 - tp_distance, instr.round_decimal))
+    cond do
+      mit_orders == [] and tp_orders == [] ->
+        # AMORÇAGE : on place 10 ordres en dessous / au dessus
+        rounded = Float.ceil(market_price * price_divider) / price_divider
 
-    last_base =
-      case tp_base_prices do
-        [] -> nil
-        _ -> Enum.min(tp_base_prices)
-      end
+        range = -10..10
 
-    new_levels =
-      if last_base do
-        for i <- 1..opts.max_order do
-          Float.round(last_base - i * step_size, instr.round_decimal)
+        orders =
+          Enum.map(range, fn i ->
+            price = Float.round(rounded + i * step_size, decimal)
+            tp_price = Float.round(price + tp_distance, decimal)
+
+            %{
+              type: "MARKET_IF_TOUCHED",
+              instrument: instr.currency_pair,
+              units: opts.position_amount,
+              price: Float.to_string(price),
+              timeInForce: "GFD",
+              takeProfitOnFill: %{
+                timeInForce: "GTC",
+                price: Float.to_string(tp_price)
+              }
+            }
+          end)
+
+        {:ok, orders}
+
+      tp_orders != [] ->
+        last_tp = Enum.max(tp_orders)
+        last_base = Float.round(last_tp - tp_distance, decimal)
+        current_base = Float.round(market_price, decimal)
+
+        if current_base < (last_base - tp_distance) do
+          # REPRISE : on replace une grille alignée si le marché est trop bas
+          rounded = Float.ceil(market_price * price_divider) / price_divider
+
+          # on cherche le plus proche multiple qui permet de retomber sur le dernier TP
+          offset = rem(round((last_tp - tp_distance - rounded) / step_size), 1)
+          aligned = Float.round(rounded + offset * step_size, decimal)
+
+          range = -10..10
+
+          orders =
+            Enum.map(range, fn i ->
+              price = Float.round(aligned + i * step_size, decimal)
+              tp_price = Float.round(price + tp_distance, decimal)
+
+              if price not in mit_orders do
+                %{
+                  type: "MARKET_IF_TOUCHED",
+                  instrument: instr.currency_pair,
+                  units: opts.position_amount,
+                  price: Float.to_string(price),
+                  timeInForce: "GFD",
+                  takeProfitOnFill: %{
+                    timeInForce: "GTC",
+                    price: Float.to_string(tp_price)
+                  }
+                }
+              end
+            end)
+            |> Enum.reject(&is_nil/1)
+
+          {:ok, orders}
+        else
+          new_levels =
+            for i <- 1..opts.max_order do
+              Float.round(last_base - i * step_size, decimal)
+            end
+
+          mit_prices = Enum.map(mit_orders, &Float.round(&1, decimal))
+
+          levels_to_place = Enum.reject(new_levels, fn lvl -> lvl in mit_prices end)
+
+          orders =
+            Enum.map(levels_to_place, fn entry_price ->
+              tp_price = Float.round(entry_price + tp_distance, decimal)
+
+              %{
+                type: "MARKET_IF_TOUCHED",
+                instrument: instr.currency_pair,
+                units: opts.position_amount,
+                price: Float.to_string(entry_price),
+                timeInForce: "GFD",
+                takeProfitOnFill: %{
+                  timeInForce: "GTC",
+                  price: Float.to_string(tp_price)
+                }
+              }
+            end)
+
+          {:ok, orders}
         end
-      else
-        []
-      end
 
-    mit_prices = Enum.map(mit_orders, &Float.round(&1, instr.round_decimal))
-
-    levels_to_place =
-      Enum.reject(new_levels, fn lvl -> lvl in mit_prices end)
-
-    orders =
-      Enum.map(levels_to_place, fn entry_price ->
-        tp_price = Float.round(entry_price + tp_distance, instr.round_decimal)
-
-        %{
-          type: "MARKET_IF_TOUCHED",
-          instrument: instr.currency_pair,
-          units: opts.position_amount,
-          price: Float.to_string(entry_price),
-          timeInForce: "GFD",
-          takeProfitOnFill: %{
-            timeInForce: "GTC",
-            price: Float.to_string(tp_price)
-          }
-        }
-      end)
-
-    {:ok, orders}
+      true ->
+        [{:nothing, :waiting_for_first_executed_order, %{}}]
+    end
   end
 
   defp post_orders([], _account, _trader), do: [{:nothing, :no_orders_to_place, %{}}]
