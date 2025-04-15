@@ -42,7 +42,7 @@ defmodule Landbuyer.Strategies.LandbuyerOriginV2 do
 
     with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <- HTTPoison.request(request),
          {:ok, %{"prices" => prices}} <- Poison.decode(body) do
-      %{"bids" => [%{"price" => bid}], "asks" => [%{"price" => ask}]} = hd(prices)
+      %{"closeoutBid" => bid, "closeoutAsk" => ask} = hd(prices)
       median = (String.to_float(bid) + String.to_float(ask)) / 2
       {:ok, Float.round(median, instr.round_decimal)}
     else
