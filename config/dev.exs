@@ -3,7 +3,7 @@ import Config
 # Configure your database
 config :landbuyer, Landbuyer.Repo,
   username: "postgres",
-  password: "postgres",
+  password: "311627Azby!",
   hostname: "localhost",
   database: "landbuyer_dev",
   stacktrace: true,
