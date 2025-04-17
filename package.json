@@ -1,0 +1,31 @@
+{
+  "name": "landbuyer",
+  "version": "1.0.0",
+  "description": "Welcome to the Landbuyer App documentation!",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "esbuild assets/js/app.js --bundle --target=es2017 --outdir=priv/static"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abdelaz3r/landbuyer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/abdelaz3r/landbuyer/issues"
+  },
+  "homepage": "https://github.com/abdelaz3r/landbuyer#readme",
+  "dependencies": {
+    "esbuild": "^0.25.2",
+    "phoenix": "^1.7.21",
+    "phoenix_html": "^4.2.1",
+    "phoenix_live_view": "^1.0.9"
+  }
+}

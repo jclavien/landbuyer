@@ -40,3 +40,24 @@ npm-debug.log
 
 # DS_Store files are OS X specific.
 .DS_Store
+
+# Environnement local
+.env
+load-env.ps1
+load-env.ps1.txt
+logs.txt
+
+# Node
+node_modules/
+package-lock.json
+
+# Assets compilés
+priv/static/app*
+priv/static/*.js*
+priv/static/*.css*
+priv/static/*.txt*
+# Ignore tous les secrets potentiels
+*.secret*
+# Garde un fichier vide .keep dans un dossier vide
+!priv/static/.keep
+
