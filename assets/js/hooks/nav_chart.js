@@ -1,3 +1,6 @@
+// 1) Importe l’adapter date-fns pour activer l’axe de temps
+import 'chartjs-adapter-date-fns'
+
 // assets/js/hooks/nav_chart.js
 import Chart from "chart.js/auto"
 

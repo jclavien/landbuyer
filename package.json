@@ -22,6 +22,7 @@
   "homepage": "https://github.com/jclavien/landbuyer#readme",
   "dependencies": {
     "chart.js": "^4.3.0",
+    "chartjs-adapter-date-fns": "^3.0.0",
     "esbuild": "^0.25.2",
     "phoenix": "^1.7.21",
     "phoenix_html": "^4.2.1",

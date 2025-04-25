@@ -2,14 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- CSRF token -->
     <meta name="csrf-token" content={get_csrf_token()} />
+    
+<!-- Titre dynamique -->
     <.live_title>{assigns[:page_title] || "Landbuyer"}</.live_title>
-     <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")} />
+    
+<!-- CSS généré par Tailwind/PostCSS -->
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
   </head>
   
   <body class="bg-gray-900 text-white">
+    <!-- Contenu de ta page (tes LiveViews) -->
     {@inner_content}
-    <script defer phx-track-static type="text/javascript" src={Routes.static_path(@conn, "/assets/app.js")}>
+    
+<!-- JS bundle Phoenix + LiveView + Hooks -->
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
   </body>
 </html>
