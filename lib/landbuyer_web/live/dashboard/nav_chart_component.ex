@@ -6,21 +6,23 @@ defmodule LandbuyerWeb.Live.Dashboard.NavChartComponent do
 
   @refresh_interval 30_000
 
+  @impl true
   def mount(socket) do
     if connected?(socket), do: Process.send_after(self(), :refresh_nav, @refresh_interval)
+
     {:ok, assign(socket, :points, [])}
   end
 
+  @impl true
   def update(%{account_id: account_id} = assigns, socket) do
     socket = assign(socket, assigns)
-    # on précharge les points une fois à l’update initiale
     points = load_points(account_id)
     {:ok, assign(socket, :points, points)}
   end
 
   def handle_info(:refresh_nav, socket) do
     points = load_points(socket.assigns.account_id)
-    # on reprogramme le refresh
+    # reprogrammation du timer à chaque rafraîchissement
     Process.send_after(self(), :refresh_nav, @refresh_interval)
     {:noreply, assign(socket, :points, points)}
   end
@@ -30,15 +32,16 @@ defmodule LandbuyerWeb.Live.Dashboard.NavChartComponent do
     |> AccountSnapshots.list_snapshots()
     |> Enum.map(fn %{inserted_at: dt, nav: nav} ->
       %{
-        inserted_at: NaiveDateTime.to_iso8601(dt) <> "Z",
+        inserted_at: DateTime.to_iso8601(dt),
         nav: Decimal.to_float(nav)
       }
     end)
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
-    <div id={"nav-chart-#{@id}"} phx-update="ignore" phx-hook="NavChart" data-points={Jason.encode!(@points)} style="height:400px;">
+    <div id={"nav-chart-#{@id}"} phx-update="ignore" phx-hook="NavChart" data-points={Jason.encode!(@points)} style="height: 400px;">
       <canvas></canvas>
     </div>
     """
