@@ -9,8 +9,9 @@ import NavChart from "./hooks/nav_chart"
 // Stub complet pour tes hooks
 const Hooks = {
   NavChart,
-  // Attention : le nom ici doit matcher le phx-hook de ton modal
-  AccountModal: {}
+  AccountModal: {},
+  // ici, le tag custom exact
+  "account-modal-1-container": {}
 }
 
 const csrfToken = document
