@@ -1,1 +1,23 @@
-<%= @inner_content %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- CSRF token via get_csrf_token, importé par use LandbuyerWeb, :html -->
+    <meta name="csrf-token" content={get_csrf_token()} />
+    
+<!-- Titre dynamique -->
+    <.live_title>{assigns[:page_title] || "Landbuyer"}</.live_title>
+    
+<!-- Ton CSS compilé par PostCSS/Tailwind -->
+    <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")} />
+  </head>
+  
+  <body class="bg-gray-900 text-white">
+    <!-- Contenu de ta page (tes LiveViews) -->
+    {@inner_content}
+    
+<!-- Ton bundle JS (Phoenix, LiveView, hooks NavChart…) -->
+    <script defer phx-track-static type="text/javascript" src={Routes.static_path(@conn, "/assets/app.js")}>
+    </script>
+  </body>
+</html>

@@ -10,7 +10,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
 
   def traders_list(assigns) do
     ~H"""
-    <h1 class="font-bold pb-4">
+    <h1 class="text-2xl font-bold text-slate-200 pb-4">
       <%= @account.label %>
     </h1>
 
@@ -21,14 +21,9 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
         if(trader.state == :active, do: "border-green/50 shadow-xl shadow-green/20", else: "border-gray-700")
       ]}
     >
-      <.header trader={trader} account_id={@account.id} />
-      <.options trader={trader} />
+      <.header trader={trader} account_id={@account.id} /> <.options trader={trader} />
       <.live_component module={TradersGraph} id={trader.id} trader={trader} />
     </section>
-
-    <.button phx-click="toggle_form_trader" theme={:secondary}>
-      Ajouter un trader
-    </.button>
     """
   end
 
@@ -39,27 +34,29 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
     ~H"""
     <div class="flex justify-between items-center gap-4 pb-4">
       <h2 :if={@edit} class="font-bold">Modifier un trader</h2>
+      
       <h2 :if={not @edit} class="font-bold">Ajouter un trader</h2>
+      <!-- removed old close button -->
       <.button theme={:ghost} only_icon={true} phx-click="toggle_form_trader">
         &times;
       </.button>
     </div>
 
     <.form :let={f} for={@changeset} phx-submit={if(@edit, do: "update_trader", else: "create_trader")} class="flex flex-col">
-      <.input :if={@edit} type="hidden" field={{f, :id}} />
-      <.input type="hidden" field={{f, :state}} />
+      <.input :if={@edit} type="hidden" field={{f, :id}} /> <.input type="hidden" field={{f, :state}} />
       <.input type="select" field={{f, :strategy}} options={Trader.strategies()} label="Stratégie" />
       <.input field={{f, :rate_ms}} label="Interval (en millisecondes)" placeholder="ex. 1000" />
-
       <h3>Instrument</h3>
+      
       <.inputs_for :let={f_instrument} field={f[:instrument]}>
         <div class="grid grid-cols-2 gap-x-4">
           <.input field={{f_instrument, :currency_pair}} label="Pair de devise" placeholder="ex. CHF_USD" />
           <.input field={{f_instrument, :round_decimal}} label="Nombre de décimales" placeholder="ex. 4" />
         </div>
       </.inputs_for>
-
+      
       <h3>Options</h3>
+      
       <.inputs_for :let={f_options} field={f[:options]}>
         <div class="grid grid-cols-2 gap-x-4">
           <.input field={{f_options, :distance_on_take_profit}} label="Take profit" placeholder="ex. 10" />
@@ -69,8 +66,9 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
           <.input field={{f_options, :max_order}} label="Maximum d'ordres" placeholder="ex. 10" />
         </div>
       </.inputs_for>
-
+      
       <.button :if={@edit}>Modifier le trader</.button>
+      
       <.button :if={not @edit}>Ajouter le trader</.button>
     </.form>
     """
@@ -82,6 +80,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
     ~H"""
     <div class="flex justify-between items-center gap-4 pb-4">
       <h2 class="font-bold">Derniers événements</h2>
+      
       <.button theme={:ghost} only_icon={true} phx-click="toggle_last_events">
         &times;
       </.button>
@@ -91,18 +90,17 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
       <section :for={event <- @events} class="hover:bg-gray-700">
         <header class="flex justify-between">
           <h1 class="flex gap-2">
-            <span class="opacity-50">#<%= event.id %></span>
-            <span><%= event.type %></span>
+            <span class="opacity-50">#<%= event.id %></span> <span><%= event.type %></span>
           </h1>
+          
           <span class="opacity-50 text-sm">
             <%= NaiveDateTime.to_string(event.inserted_at) %>
           </span>
         </header>
-
+        
         <div :if={not Enum.empty?(event.message)} class="pl-4">
           <div :for={{key, value} <- event.message} class="grid grid-cols-2">
-            <span class="opacity-50"><%= key %></span>
-            <span><%= value %></span>
+            <span class="opacity-50"><%= key %></span> <span><%= value %></span>
           </div>
         </div>
       </section>
@@ -125,6 +123,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
           Supprimer
         </.button>
       </:confirm>
+      
       <:cancel>
         <.button theme={:secondary}>
           Annuler
@@ -137,20 +136,23 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
         <h2 class="flex gap-2 items-center text-base">
           <div :if={@trader.state == :active} class="relative w-3 h-3">
             <div class="absolute inset-0 rounded-full bg-green"></div>
+            
             <div class="absolute -inset-1 rounded-full bg-green/40 motion-safe:animate-ping"></div>
           </div>
+          
           <div :if={@trader.state == :paused} class="w-3 h-3 rounded-full bg-gray-200"></div>
-          <%= "Trader A#{@account_id}/T#{@trader.id}" %>
+           <%= "Trader A#{@account_id}/T#{@trader.id}" %>
         </h2>
-
+        
         <span :if={@trader.state == :active} class="opacity-50">
           Actif
         </span>
+        
         <span :if={@trader.state == :paused} class="opacity-50">
           En pause
         </span>
       </div>
-
+      
       <div class="absolute top-0 right-0 bottom-0 flex items-center gap-2 p-2">
         <.button
           :if={@trader.state == :active}
@@ -162,6 +164,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
         >
           Pause
         </.button>
+        
         <.button
           :if={@trader.state == :paused}
           phx-click="toggle_trader_state"
@@ -172,6 +175,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
         >
           Start
         </.button>
+        
         <.button
           disabled={@trader.state != :paused}
           phx-click="toggle_form_trader"
@@ -181,6 +185,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
         >
           Modifier
         </.button>
+        
         <.button
           disabled={@trader.state != :paused}
           phx-click={show_modal("modal-#{@trader.id}")}
@@ -229,10 +234,12 @@ defmodule LandbuyerWeb.Live.Dashboard.Traders do
       <span class="font-bold">
         <%= @label %>
       </span>
+      
       <span class="flex items-baseline gap-1">
         <span class="text-base whitespace-nowrap overflow-hidden">
           <%= @value %>
         </span>
+        
         <span :if={@unit} class="text-sm opacity-50">
           <%= @unit %>
         </span>

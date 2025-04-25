@@ -1,19 +1,18 @@
 <!DOCTYPE html>
-<html lang="en" class="[scrollbar-gutter:stable]">
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="csrf-token" content={get_csrf_token()} />
-
-    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
-    </script>
-
-    <.live_title>
-      <%= assigns[:page_title] || "Landbuyer" %>
-    </.live_title>
+    <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> {csrf_meta_tag()}
+    <.live_title>{assigns[:page_title] || "Landbuyer"}</.live_title>
+    
+<!-- CSS généré par Tailwind/PostCSS -->
+    <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")} />
   </head>
-  <body class="bg-gray-800 text-gray-50 font-mono text-base antialiased">
-    <%= @inner_content %>
+  
+  <body class="bg-gray-900 text-white">
+    {@inner_content}
+    
+<!-- JS bundle Phoenix + LiveView + Hooks -->
+    <script defer phx-track-static type="text/javascript" src={Routes.static_path(@conn, "/assets/app.js")}>
+    </script>
   </body>
 </html>

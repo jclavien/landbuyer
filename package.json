@@ -3,29 +3,36 @@
   "version": "1.0.0",
   "description": "Welcome to the Landbuyer App documentation!",
   "main": "index.js",
-  "directories": {
-    "lib": "lib",
-    "test": "test"
-  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "esbuild assets/js/app.js --bundle --target=es2017 --outdir=priv/static"
+    "css:build": "cd assets && postcss css/app.css -o ../priv/static/assets/app.css --env production",
+    "js:build": "esbuild assets/js/app.js --bundle --target=es2017 --outdir=priv/static/assets --loader:.woff=file --minify",
+    "deploy": "npm run css:build && npm run js:build",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/abdelaz3r/landbuyer.git"
+    "url": "git+https://github.com/jclavien/landbuyer.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Jérôme Clavien <jerome.clavien@epfl.ch>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/abdelaz3r/landbuyer/issues"
+    "url": "https://github.com/jclavien/landbuyer/issues"
   },
-  "homepage": "https://github.com/abdelaz3r/landbuyer#readme",
+  "homepage": "https://github.com/jclavien/landbuyer#readme",
   "dependencies": {
+    "chart.js": "^4.3.0",
     "esbuild": "^0.25.2",
     "phoenix": "^1.7.21",
     "phoenix_html": "^4.2.1",
-    "phoenix_live_view": "^1.0.9"
+    "phoenix_live_view": "^1.0.9",
+    "topbar": "^1.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "autoprefixer": "^10.4.13",
+    "postcss": "^8.4.21",
+    "postcss-cli": "^10.1.0",
+    "tailwindcss": "^3.3.2"
   }
 }

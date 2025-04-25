@@ -8,61 +8,62 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
 
   def accounts_list(assigns) do
     ~H"""
-    <h1 class="font-bold pb-4">
-      Comptes
-    </h1>
+    <div class="flex items-center justify-between mb-3">
+      <h1 class="text-2xl font-bold text-slate-100">
+        Accounts
+      </h1>
+       <.icon_button click="toggle_form_account" label="Add account" d="M12 4v16m8-8H4" />
+    </div>
 
     <div :for={account <- @accounts} class="relative mb-3 text-sm">
       <.modal
         id={"account-modal-#{account.id}"}
         on_confirm={JS.push("delete_account", value: %{id: account.id}) |> hide_modal("account-modal-#{account.id}")}
       >
-        Confirmation de suppression
+        Are you sure?
         <:confirm>
-          <.button theme={:error}>
-            Supprimer
-          </.button>
+          <.button theme={:error}>Delete</.button>
         </:confirm>
+        
         <:cancel>
-          <.button theme={:secondary}>
-            Annuler
-          </.button>
+          <.button theme={:secondary}>Cancel</.button>
         </:cancel>
       </.modal>
-
-      <button
-        :if={length(account.traders) == 0}
-        phx-click={show_modal("account-modal-#{account.id}")}
-        phx-value-id={account.id}
-        class="absolute grid place-content-center text-xl top-2 right-2 w-5 h-5 border border-black/80 bg-red/60 text-black/80 hover:bg-red transition-all"
-      >
-        &times;
-      </button>
+       <% latest_nav = Landbuyer.AccountSnapshots.NavReader.get_latest_nav(account.id) %>
+      <div class="absolute top-2 right-2">
+        <.icon_button_sm click={show_modal("account-modal-#{account.id}")} label="Delete account" d="M6 18L18 6M6 6l12 12" />
+      </div>
+      
       <.link
         patch={~p"/account/#{account.id}"}
         class={[
-          "block p-3 space-y-2 border transition-all",
+          "block p-3 space-y-2 transition-all rounded-lg duration-300",
+          "w-full",
           if(@active_account && @active_account.id == account.id,
-            do: "border-gray-500 bg-black/40 hover:bg-black/50",
-            else: "border-gray-800 bg-black/20 hover:bg-black/30"
+            do: "bg-slate-800 hover:bg-slate-800/60 w-[calc(100%+0.75rem)]",
+            else: "bg-slate-600 hover:bg-slate-600/60"
           )
         ]}
       >
-        <div class="text-base">
+        <div class="text-lg font-bold">
           <%= account.label %>
         </div>
-        <div class="flex justify-between">
-          <.label_value label="URL du service" value={account.hostname} />
-          <.label_value label="Traders" value={length(account.traders)} class="text-right" />
+         <%!-- Affiche l’ID en petit, juste pour debug --%>
+        <div class="text-xs text-slate-400">
+          Account ID: <%= account.id %>
         </div>
-        <.label_value label="ID de compte" value={account.oanda_id} />
-        <.label_value label="Jeton d'accès" value={account.token} />
+        
+        <%= if latest_nav do %>
+          <div class="text-2xl font-sans font-bold text-slate-100">
+            NAV : <%= latest_nav.nav %>
+          </div>
+        <% else %>
+          <div class="text-sm text-slate-400 italic">
+            (pas encore de NAV)
+          </div>
+        <% end %>
       </.link>
     </div>
-
-    <.button phx-click="toggle_form_account" theme={:secondary} class="w-full">
-      Ajouter un compte
-    </.button>
     """
   end
 
@@ -70,23 +71,21 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
 
   def accounts_create(assigns) do
     ~H"""
-    <div class="flex items-center gap-4 pb-4">
-      <.button theme={:ghost} only_icon={true} phx-click="toggle_form_account">
-        &lsaquo;
-      </.button>
-      <h1 class="font-bold">
-        Ajouter un compte
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-bold tracking-wide text-slate-100">
+        Add account
       </h1>
+       <.icon_button click="toggle_form_account" label="Back" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
     </div>
 
-    <.form :let={f} for={@changeset} phx-submit="create_account" class="flex flex-col">
-      <.input field={{f, :label}} label="Nom du compte" placeholder="ex. Compte de test" />
-      <.input field={{f, :oanda_id}} label="ID du compte Oanda" placeholder="ex. xxx-xxx-xxxxxx-xxx" />
-      <.input field={{f, :hostname}} label="URL du service" placeholder="ex. api-fxpractice.oanda.com" />
-      <.input field={{f, :token}} label="Jeton d'accès" />
-      <.button>
-        Ajouter le compte
-      </.button>
+    <.form :let={f} for={@changeset} phx-submit="create_account" class="flex flex-col gap-4">
+      <.input field={{f, :label}} label="Account name" placeholder="" />
+      <.input field={{f, :oanda_id}} label="Oanda ID" placeholder="ex. xxx-xxx-xxxxxx-xxx" />
+      <.input field={{f, :hostname}} label="Service URL" placeholder="ex. api-fxpractice.oanda.com" />
+      <.input field={{f, :token}} label="Access key" />
+      <div class="flex justify-end">
+        <.icon_button type="submit" label="Add account" d="M12 4.5v15m7.5-7.5h-15" />
+      </div>
     </.form>
     """
   end
@@ -101,6 +100,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
       <span class="font-bold">
         <%= @label %>
       </span>
+      
       <span class="whitespace-nowrap overflow-hidden">
         <%= @value %>
       </span>

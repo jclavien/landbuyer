@@ -34,7 +34,7 @@ defmodule Landbuyer.Schemas.Account do
   def changeset(account, params \\ %{}) do
     account
     |> cast(params, [:label, :hostname, :token, :oanda_id])
-    |> validate_required([:label, :hostname, :token, :oanda_id], message: "Champ requis")
+    |> validate_required([:label, :hostname, :token, :oanda_id], message: "Required")
     |> validate_length(:label, max: 255, message: "Dépasse la limite de 255 caractère")
     |> validate_length(:hostname, max: 255, message: "Dépasse la limite de 255 caractère")
     |> validate_length(:token, max: 255, message: "Dépasse la limite de 255 caractère")

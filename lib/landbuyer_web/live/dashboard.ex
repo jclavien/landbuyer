@@ -13,12 +13,14 @@ defmodule LandbuyerWeb.Live.Dashboard do
   alias Landbuyer.Schemas.Account
   alias Landbuyer.Schemas.Trader
   alias Landbuyer.Workers.Supervisor
+  # 30 secondes
+  @refresh_interval 30_000
 
   @impl Phoenix.LiveView
   def mount(_params, _session, socket) do
     socket =
       socket
-      |> assign(page_title: "Landbuyer")
+      |> assign(page_title: "Landbuyer v3.2")
       |> default_assigns()
       |> assign(active_account: nil)
       |> assign(show_form_account: false)
@@ -29,6 +31,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
       |> assign(show_last_events: false)
       |> assign(last_events: [])
 
+    send(self(), :refresh_nav)
     {:ok, socket}
   end
 
@@ -46,24 +49,37 @@ defmodule LandbuyerWeb.Live.Dashboard do
     ~H"""
     <div class="h-screen">
       <.layout_header />
-
       <div class="flex h-[calc(100%-7rem)] overflow-hidden">
-        <div class="w-96 p-4 border-r bg-gray-900 border-gray-700 overflow-y-auto">
+        <!-- Colonne de gauche (comptes) -->
+        <div class="w-96 pl-2 pr-3 py-4 ml-4 bg-slate-700 border-slate-700 text-slate-100 overflow-y-auto">
           <.accounts_list :if={not @show_form_account} accounts={@accounts} active_account={@active_account} />
           <.accounts_create :if={@show_form_account} changeset={@account_changeset} />
         </div>
-
-        <div class={[
-          "relative flex flex-1 flex-col p-4 w-full overflow-x-hidden",
-          if(@show_form_trader or @show_last_events, do: "overflow-y-hidden", else: "overflow-y-auto")
-        ]}>
-          <div :if={@active_account}>
+        <!-- ── CENTRE : graphique + contenu existant ── -->
+        <div class="flex-1 flex flex-col pl-8 pr-4 py-6 bg-slate-800 rounded-xl text-slate-100 overflow-y-auto">
+          <!-- Le reste du contenu central (traders, formulaires, events) -->
+          <div :if={@active_account} class="space-y-4">
             <.traders_list account={@active_account} />
+            <div class="flex justify-start">
+              <.icon_button
+                click="toggle_form_trader"
+                label="Add trader"
+                d="M12 4.5v15m7.5-7.5h-15"
+                class="bg-slate-700 hover:bg-slate-600"
+              />
+            </div>
+            <!-- Le graphique NAV -->
+            <.live_component
+              module={LandbuyerWeb.Live.Dashboard.NavChartComponent}
+              id="nav_chart"
+              account_id={@active_account.id}
+              points={@active_account.nav_points}
+            />
           </div>
-
+          <!-- Tes panels de formulaires et d'événements ici -->
           <div class={[
             "fixed top-14 bottom-14 w-96 transition-all",
-            "border-l bg-gray-900 border-gray-700 shadow-xl",
+            "border-l bg-gray-50 border-gray-50 shadow-xl",
             @show_form_trader && "right-0",
             not @show_form_trader && "-right-96"
           ]}>
@@ -71,10 +87,10 @@ defmodule LandbuyerWeb.Live.Dashboard do
               <.traders_create changeset={@trader_changeset} edit={@trader_edit} />
             </div>
           </div>
-
+          
           <div class={[
             "fixed top-14 bottom-14 w-96 transition-all",
-            "border-l bg-gray-900 border-gray-700 shadow-xl",
+            "border-l bg-gray-50 border-gray-50 shadow-xl",
             @show_last_events && "right-0",
             not @show_last_events && "-right-96"
           ]}>
@@ -84,7 +100,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
           </div>
         </div>
       </div>
-
+      
       <.layout_footer
         flash={@flash}
         account_count={@account_count}
@@ -131,7 +147,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
           |> default_assigns()
           |> assign(show_form_account: false)
           |> assign(account_changeset: default_account_changeset())
-          |> put_flash(:info, "Compte ajouté")
+          |> put_flash(:info, "Account added")
           |> push_patch(to: ~p"/account/#{account.id}")
 
         {:noreply, socket}
@@ -146,7 +162,7 @@ defmodule LandbuyerWeb.Live.Dashboard do
 
     case Accounts.delete(account) do
       {:ok, _account} ->
-        {:noreply, socket |> default_assigns() |> put_flash(:info, "Compte supprimé") |> push_patch(to: ~p"/")}
+        {:noreply, socket |> default_assigns() |> put_flash(:info, "Account deleted") |> push_patch(to: ~p"/")}
 
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Erreur lors de la suppression du compte")}
@@ -266,6 +282,32 @@ defmodule LandbuyerWeb.Live.Dashboard do
     {:noreply, socket}
   end
 
+  @impl true
+  def handle_info(:refresh_nav, socket) do
+    # on relit tous les comptes ET on injecte leurs nav_points
+    accounts_with_nav =
+      Enum.map(Accounts.get_all(), fn account ->
+        nav_points = Landbuyer.AccountSnapshots.NavReader.list_nav_points(account.id)
+        Map.put(account, :nav_points, nav_points)
+      end)
+
+    socket =
+      socket
+      |> assign(accounts: accounts_with_nav)
+      |> assign(
+        active_account:
+          case socket.assigns.active_account do
+            %{id: id} -> Enum.find(accounts_with_nav, &(&1.id == id))
+            _ -> nil
+          end
+      )
+
+    # on reprogramme le prochain rafraîchissement
+    Process.send_after(self(), :refresh_nav, @refresh_interval)
+
+    {:noreply, socket}
+  end
+
   defp default_assigns(socket) do
     accounts = Accounts.get_all()
     account_count = length(accounts)
@@ -288,7 +330,26 @@ defmodule LandbuyerWeb.Live.Dashboard do
   end
 
   defp set_active_account(socket, account_id) do
-    account = Enum.find(socket.assigns.accounts, fn account -> account.id == account_id end)
+    # on récupère l'account existant
+    account =
+      Enum.find(socket.assigns.accounts, &(&1.id == account_id))
+
+    # on charge tous les snapshots depuis le début
+    points =
+      account.id
+      |> Landbuyer.AccountSnapshots.NavReader.list_nav_points(limit: :infinity)
+      |> Enum.map(fn s ->
+        dt = DateTime.from_naive!(s.inserted_at, "Etc/UTC")
+
+        %{
+          inserted_at: DateTime.to_iso8601(dt),
+          nav: Decimal.to_float(s.nav)
+        }
+      end)
+
+    # on injecte la liste sous la clé :nav_points
+    account = Map.put(account, :nav_points, points)
+
     assign(socket, active_account: account)
   end
 

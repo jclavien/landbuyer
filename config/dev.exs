@@ -2,9 +2,9 @@ import Config
 
 # Configure your database
 config :landbuyer, Landbuyer.Repo,
-  username: System.get_env("PGUSER") || "postgres",
-  password: System.get_env("PGPASSWORD") || "postgres",
-  hostname: System.get_env("PGHOST") || "localhost",
+  username: "postgres",
+  password: "1234",
+  hostname: "localhost",
   database: "landbuyer_dev",
   show_sensitive_data_on_connection_error: true,
   pool_size: 10

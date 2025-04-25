@@ -44,7 +44,7 @@ defmodule LandbuyerWeb.CoreComponents do
   def modal(assigns) do
     ~H"""
     <div id={@id} phx-mounted={@show && show_modal(@id)} class="hidden relative z-50">
-      <div id={"#{@id}-bg"} class="fixed inset-0 transition-opacity bg-gray-900/80" aria-hidden="true" />
+      <div id={"#{@id}-bg"} class="fixed inset-0 transition-opacity bg-gray-100" aria-hidden="true" />
       <div
         class="overflow-y-auto fixed inset-0"
         aria-describedby={"#{@id}-description"}
@@ -60,15 +60,15 @@ defmodule LandbuyerWeb.CoreComponents do
               phx-window-keydown={hide_modal(@on_cancel, @id)}
               phx-key="escape"
               phx-click-away={hide_modal(@on_cancel, @id)}
-              class="hidden relative p-4 bg-gray-700 border-2 border-gray-800 shadow-lg transition"
+              class="hidden relative p-4 bg-slate-700 border-2 border-slate-700 shadow-lg transition"
             >
               <div id={"#{@id}-content"} class="flex flex-col gap-4 text-base">
                 <%= render_slot(@inner_block) %>
-
                 <div :if={@confirm != [] or @cancel != []} class="flex gap-4 items-center">
                   <div :for={confirm <- @confirm} id={"#{@id}-confirm"} phx-click={@on_confirm} phx-disable-with>
                     <%= render_slot(confirm) %>
                   </div>
+                  
                   <div :for={cancel <- @cancel} phx-click={hide_modal(@on_cancel, @id)}>
                     <%= render_slot(cancel) %>
                   </div>
@@ -93,8 +93,7 @@ defmodule LandbuyerWeb.CoreComponents do
 
   def flash_group(assigns) do
     ~H"""
-    <.flash kind={:info} flash={@flash} />
-    <.flash kind={:error} flash={@flash} />
+    <.flash kind={:info} flash={@flash} /> <.flash kind={:error} flash={@flash} />
     <.flash
       id="client-error"
       kind={:neutral}
@@ -104,6 +103,7 @@ defmodule LandbuyerWeb.CoreComponents do
     >
       Reconnection
     </.flash>
+
     <.flash
       id="server-error"
       kind={:neutral}
@@ -139,8 +139,8 @@ defmodule LandbuyerWeb.CoreComponents do
       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
       role="alert"
       class={[
-        "relative flex items-center p-2 pr-5 bg-gray-800 text-sm text-white",
-        @kind == :neutral && "border border-gray-700",
+        "relative flex items-center p-2 pr-5 bg-slate-800 text-sm text-slate-200",
+        @kind == :neutral && "border border-gray-200",
         @kind == :error && "border border-red text-red",
         @kind == :info && "border border-green text-green"
       ]}
@@ -149,11 +149,12 @@ defmodule LandbuyerWeb.CoreComponents do
       <p>
         <%= msg %>
       </p>
+      
       <button
         type="button"
         class={[
           "absolute cursor-pointer top-0 right-0 w-3 h-3",
-          @kind == :neutral && "bg-gray-500",
+          @kind == :neutral && "bg-gray-400",
           @kind == :error && "bg-red",
           @kind == :info && "bg-green"
         ]}
@@ -264,10 +265,9 @@ defmodule LandbuyerWeb.CoreComponents do
         name={@name}
         value="true"
         checked={@checked}
-        class="rounded border-gray-100 focus:border-gray-100"
+        class="rounded border-slate-300 focus:border-blue-300"
         {@rest}
-      />
-      <%= @label %>
+      /> <%= @label %>
     </label>
     """
   end
@@ -276,6 +276,7 @@ defmodule LandbuyerWeb.CoreComponents do
     ~H"""
     <div phx-feedback-for={@name}>
       <.label for={@id}><%= @label %></.label>
+      
       <select
         id={@id}
         name={@name}
@@ -289,9 +290,9 @@ defmodule LandbuyerWeb.CoreComponents do
         {@rest}
       >
         <option :if={@prompt}><%= @prompt %></option>
-        <%= Phoenix.HTML.Form.options_for_select(@options, @value) %>
+         <%= Phoenix.HTML.Form.options_for_select(@options, @value) %>
       </select>
-      <.error errors={@errors} />
+       <.error errors={@errors} />
     </div>
     """
   end
@@ -300,7 +301,7 @@ defmodule LandbuyerWeb.CoreComponents do
     ~H"""
     <div phx-feedback-for={@name}>
       <.label for={@id}><%= @label %></.label>
-      <textarea
+       <textarea
         id={@id || @name}
         name={@name}
         class={[
@@ -311,8 +312,7 @@ defmodule LandbuyerWeb.CoreComponents do
         ]}
         {@rest}
       >
-    <%= @value %></textarea>
-      <.error errors={@errors} />
+    <%= @value %></textarea> <.error errors={@errors} />
     </div>
     """
   end
@@ -321,6 +321,7 @@ defmodule LandbuyerWeb.CoreComponents do
     ~H"""
     <div phx-feedback-for={@name}>
       <.label for={@id}><%= @label %></.label>
+      
       <input
         type={@type}
         name={@name}
@@ -333,8 +334,7 @@ defmodule LandbuyerWeb.CoreComponents do
           input_border(@errors)
         ]}
         {@rest}
-      />
-      <.error errors={@errors} />
+      /> <.error errors={@errors} />
     </div>
     """
   end
@@ -350,7 +350,7 @@ defmodule LandbuyerWeb.CoreComponents do
 
   def label(assigns) do
     ~H"""
-    <label for={@for} class="block text-sm">
+    <label for={@for} class="block text-base">
       <%= render_slot(@inner_block) %>
     </label>
     """
@@ -412,5 +412,65 @@ defmodule LandbuyerWeb.CoreComponents do
     |> hide("##{id}-container")
     |> JS.hide(to: "##{id}", transition: {"block", "block", "hidden"})
     |> JS.pop_focus()
+  end
+
+  # @doc """
+  # Squared button with icon
+  attr(:type, :string, default: "button")
+  attr(:click, :string, default: nil)
+  attr(:label, :string, default: nil)
+  attr(:d, :string, required: true)
+  attr(:class, :string, default: "")
+
+  def icon_button(assigns) do
+    # 1) on calcule la chaîne de classes
+    classes =
+      [
+        "grid place-content-center w-8 h-8 bg-slate-800 hover:bg-slate-600 rounded",
+        assigns.class
+      ]
+      |> Enum.filter(&(&1 not in [nil, ""]))
+      |> Enum.join(" ")
+
+    # 2) on la met dans les assigns
+    assigns = assign(assigns, :classes, classes)
+
+    # 3) on l’utilise dans le ~H
+    ~H"""
+    <button type={@type} phx-click={@click} aria-label={@label} class={@classes}>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d={@d} stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+      </svg>
+    </button>
+    """
+  end
+
+  @doc """
+  Small icon button, 4x4 instead of 8x8.
+  """
+  attr(:click, :string, default: nil)
+  attr(:label, :string, default: nil)
+  attr(:d, :string, required: true)
+
+  def icon_button_sm(assigns) do
+    ~H"""
+    <button
+      type="button"
+      phx-click={@click}
+      class="grid place-content-center w-5 h-5 bg-slate-800 hover:bg-slate-600 rounded"
+      aria-label={@label}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-4 h-4 text-red-400"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="3"
+      >
+        <path d={@d} stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+    """
   end
 end

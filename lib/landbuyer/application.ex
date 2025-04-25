@@ -35,7 +35,6 @@ defmodule Landbuyer.Application do
     Workers.Supervisor.maybe_spawn_active_traders()
 
     resp
-
   end
 
   # Tell Phoenix to update the endpoint configuration
