@@ -32,7 +32,7 @@ defmodule LandbuyerWeb.Live.Dashboard.NavChartComponent do
     |> AccountSnapshots.list_snapshots()
     |> Enum.map(fn %{inserted_at: dt, nav: nav} ->
       %{
-        inserted_at: DateTime.to_iso8601(dt),
+        inserted_at: NaiveDateTime.to_iso8601(dt) <> "Z",
         nav: Decimal.to_float(nav)
       }
     end)
