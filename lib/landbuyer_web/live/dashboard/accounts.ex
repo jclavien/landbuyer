@@ -13,33 +13,33 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
     </div>
 
     <div :for={account <- @accounts} class="relative mb-3 text-sm">
-      <!-- suppression du modal Delete Account pour éviter le custom element -->
-      <%!--
+      <!-- Bouton X pour supprimer directement le compte -->
+      <div class="absolute top-2 left-2 z-20">
+        <.icon_button_sm click={show_modal("account-modal-#{account.id}")} label="Delete account" d="M6 18L18 6M6 6l12 12" />
+      </div>
+      
       <.modal
         id={"account-modal-#{account.id}"}
-        on_confirm={JS.push("delete_account", value: %{id: account.id})
-                    |> hide_modal("account-modal-#{account.id}")}>
+        on_confirm={
+          JS.push("delete_account", value: %{id: account.id})
+          |> hide_modal("account-modal-#{account.id}")
+        }
+      >
         Are you sure?
         <:confirm>
           <.button theme={:error}>Delete</.button>
         </:confirm>
+        
         <:cancel>
           <.button theme={:secondary}>Cancel</.button>
         </:cancel>
       </.modal>
-
-      <div class="absolute top-2 right-2">
-        <.icon_button_sm click={show_modal("account-modal-#{account.id}")}
-                         label="Delete account"
-                         d="M6 18L18 6M6 6l12 12" />
-      </div>
-      --%>
       
     <!-- lien vers le détail du compte -->
       <.link
         patch={~p"/account/#{account.id}"}
         class={[
-          "block p-3 space-y-2 transition-all rounded-lg duration-300 w-full",
+          "block p-3 px-10 space-y-2 transition-all rounded-lg duration-300 w-full",
           if(@active_account && @active_account.id == account.id,
             do: "bg-slate-800 hover:bg-slate-800/60 w-[calc(100%+0.75rem)]",
             else: "bg-slate-600 hover:bg-slate-600/60"
