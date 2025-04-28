@@ -25,7 +25,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Layout do
         <h1 class="font-bold leading-tight">
           <div class="text-3xl uppercase">LANDBUYER</div>
           
-          <div class="text-sm text-slate-200">v3.0</div>
+          <div class="text-sm text-slate-200">v3.2</div>
         </h1>
       </.link>
     </header>
@@ -42,15 +42,15 @@ defmodule LandbuyerWeb.Live.Dashboard.Layout do
     <footer class="relative flex items-center px-4 h-14 border-t bg-slate-800 text-slate-100 border-slate-800">
       <div class="flex items-center gap-6 text-sm">
         <span>
-          <strong><%= @account_count %></strong> comptes
+          <strong>{@account_count}</strong> comptes
         </span>
         
         <span>
-          <strong><%= @trader_count %></strong> traders
+          <strong>{@trader_count}</strong> traders
         </span>
         
         <span :if={@active_trader_count > 0} class="text-green">
-          <strong><%= @active_trader_count %></strong> traders actifs
+          <strong>{@active_trader_count}</strong> traders actifs
         </span>
       </div>
       

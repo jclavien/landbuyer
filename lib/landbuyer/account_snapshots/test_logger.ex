@@ -5,34 +5,54 @@ defmodule Landbuyer.AccountSnapshots.TestLogger do
   alias Landbuyer.AccountSnapshots.AccountSnapshot
   alias Landbuyer.Repo
 
-  @interval :timer.seconds(30)
-  @default_account_id 3
+  require Logger
 
-  ## === Public API ===
+  @doc """
+  Démarre le TestLogger.
 
-  # On récupère l'account_id passé ou on retombe sur @default_account_id
-  def start_link(opts \\ []) do
-    account_id = Keyword.get(opts, :account_id, @default_account_id)
-    GenServer.start_link(__MODULE__, account_id, name: __MODULE__)
+  ## Options
+
+    * :rate_ms    – intervalle en millisecondes (default 30_000)
+    * :account_id – l’ID du compte (obligatoire)
+    * :initial_nav – valeur de départ du NAV (default Decimal.new(2000))
+  """
+  def start_link(opts) when is_list(opts) do
+    rate_ms = Keyword.get(opts, :rate_ms, 30_000)
+    account_id = Keyword.fetch!(opts, :account_id)
+    initial_nav = Keyword.get(opts, :initial_nav, Decimal.new(2000))
+    GenServer.start_link(__MODULE__, {rate_ms, account_id, initial_nav})
   end
 
-  ## === Callbacks ===
-
-  # now the state is simply the integer account_id
-  def init(account_id) when is_integer(account_id) do
-    IO.puts("[TestLogger] Démarré avec account_id = #{account_id}")
-    schedule_tick()
-    {:ok, account_id}
+  @impl true
+  def init({rate_ms, account_id, initial_nav}) do
+    Logger.info("[TestLogger] Démarré avec account_id = #{account_id}")
+    schedule_tick(rate_ms)
+    {:ok, %{rate_ms: rate_ms, account_id: account_id, nav: initial_nav}}
   end
 
-  def handle_info(:tick, account_id) do
-    nav = Float.round(950 + :rand.uniform() * 100, 2)
+  @impl true
+  def handle_info(:run_strategy, %{rate_ms: rate_ms, account_id: id, nav: last_nav} = state) do
+    # génère un coefficient aléatoire entre -0.01 et +0.01
+    fluctuation = (:rand.uniform() * 2 - 1) * 0.01
 
-    Repo.insert!(%AccountSnapshot{account_id: account_id, nav: nav})
-    IO.puts("[TestLogger] Nouveau snapshot NAV = #{nav}")
-    schedule_tick()
-    {:noreply, account_id}
+    # calcule le nouveau NAV
+    last_value = Decimal.to_float(last_nav)
+    new_value = last_value * (1 + fluctuation)
+    new_nav = Decimal.from_float(new_value)
+
+    # insertion en base
+    %AccountSnapshot{}
+    |> AccountSnapshot.changeset(%{account_id: id, nav: new_nav})
+    |> Repo.insert!()
+
+    # re-planifie le prochain tick
+    schedule_tick(rate_ms)
+
+    # met à jour le state avec le nouveau NAV
+    {:noreply, %{state | nav: new_nav}}
   end
 
-  defp schedule_tick, do: Process.send_after(self(), :tick, @interval)
+  defp schedule_tick(rate_ms) do
+    Process.send_after(self(), :run_strategy, rate_ms)
+  end
 end

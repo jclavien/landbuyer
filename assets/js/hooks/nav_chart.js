@@ -27,12 +27,24 @@ const NavChart = {
         }]
       },
       options: {
+        responsive: true,  
         animation: false,
+        maintainAspectRatio: false,
         scales: {
           x: {
             type: "time",
             time: {
-              unit: labels.length > 5000 ? "hour" : "minute"
+              minUnit: "second",
+              maxUnit: "year",
+              displayFormats: {
+                second: "HH:mm:ss",
+                minute: "HH:mm",
+                hour:   "MMM d, HH:mm",
+                day:    "MMM d",
+                week:   "MMM d",
+                month:  "MMM yyyy",
+                year:   "yyyy"
+              }
             },
             ticks: {
               color: '#94a3b8',
@@ -40,24 +52,30 @@ const NavChart = {
               maxTicksLimit: 10
             },
             grid: {
-              color: 'rgba(71, 85, 105, 0.2)',
-              lineWidth: 1,
+              color: '#94a3b8',
+              lineWidth: 0.05,
               drawBorder: false
             }
           },
+          
           y: {
             beginAtZero: false,
+            position: 'right',
             ticks: {
               color: '#94a3b8',
               font: {
                 family: 'sans',
                 size: 12,
-                weight: '500'
+                weight: '500',
+                color : '#94a3b8'
               }
             },
+            border: {
+              display: false
+            },
             grid: {
-              color: 'rgba(71, 85, 105, 0.2)',
-              lineWidth: 1,
+              color: '#94a3b8',
+              lineWidth: 0.05,
               drawBorder: false
             }
           }
@@ -72,7 +90,8 @@ const NavChart = {
               lineWidth: 1,
               boxWidth: 40,
               boxHeight: 30,
-              padding: 20
+              padding: 20,
+              color: '#94a3b8'
             }
           }
         }
@@ -101,8 +120,6 @@ const NavChart = {
 
     this.chart.data.labels = labels
     this.chart.data.datasets[0].data = data
-    this.chart.options.scales.x.time.unit =
-      points.length > 5000 ? "hour" : "minute"
     this.chart.update()
   }
 }

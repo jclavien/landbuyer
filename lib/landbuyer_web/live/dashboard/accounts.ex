@@ -39,7 +39,7 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
       <.link
         patch={~p"/account/#{account.id}"}
         class={[
-          "block p-3 px-10 space-y-2 transition-all rounded-lg duration-300 w-full",
+          "block p-3 px-10 space-y-2 transition-all rounded duration-300 w-full",
           if(@active_account && @active_account.id == account.id,
             do: "bg-slate-800 hover:bg-slate-800/60 w-[calc(100%+0.75rem)]",
             else: "bg-slate-600 hover:bg-slate-600/60"
@@ -52,7 +52,9 @@ defmodule LandbuyerWeb.Live.Dashboard.Accounts do
         
         <%= if latest = Landbuyer.AccountSnapshots.NavReader.get_latest_nav(account.id) do %>
           <div class="text-2xl font-sans font-bold text-slate-100">
-            NAV : {latest.nav}
+            NAV : {latest.nav
+            |> Decimal.round(2)
+            |> Decimal.to_string()}
           </div>
         <% else %>
           <div class="text-sm text-slate-400 italic">(pas encore de NAV)</div>

@@ -41,8 +41,14 @@ defmodule LandbuyerWeb.Live.Dashboard.NavChartComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div id={"nav-chart-#{@id}"} phx-update="ignore" phx-hook="NavChart" data-points={Jason.encode!(@points)} style="height: 400px;">
-      <canvas></canvas>
+    <div
+      id={"nav-chart-#{@id}"}
+      phx-update="ignore"
+      phx-hook="NavChart"
+      data-points={Jason.encode!(@points)}
+      class="w-full max-w-7xl h-96"
+    >
+      <canvas class="w-full h-full"></canvas>
     </div>
     """
   end

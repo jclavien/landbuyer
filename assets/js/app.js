@@ -9,9 +9,6 @@ import NavChart from "./hooks/nav_chart"
 // Stub complet pour tes hooks
 const Hooks = {
   NavChart,
-  AccountModal: {},
-  // ici, le tag custom exact
-  "account-modal-1-container": {}
 }
 
 const csrfToken = document

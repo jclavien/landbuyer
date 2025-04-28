@@ -44,7 +44,7 @@ defmodule LandbuyerWeb.CoreComponents do
   def modal(assigns) do
     ~H"""
     <div id={@id} phx-mounted={@show && show_modal(@id)} class="hidden relative z-50">
-      <div id={"#{@id}-bg"} class="fixed inset-0 transition-opacity bg-gray-100" aria-hidden="true" />
+      <div id={"#{@id}-bg"} class="fixed inset-0 transition-opacity bg-slate-100" aria-hidden="true" />
       <div
         class="overflow-y-auto fixed inset-0"
         aria-describedby={"#{@id}-description"}
@@ -63,14 +63,14 @@ defmodule LandbuyerWeb.CoreComponents do
               class="hidden relative p-4 bg-slate-700 border-2 border-slate-700 shadow-lg transition"
             >
               <div id={"#{@id}-content"} class="flex flex-col gap-4 text-base">
-                <%= render_slot(@inner_block) %>
+                {render_slot(@inner_block)}
                 <div :if={@confirm != [] or @cancel != []} class="flex gap-4 items-center">
                   <div :for={confirm <- @confirm} id={"#{@id}-confirm"} phx-click={@on_confirm} phx-disable-with>
-                    <%= render_slot(confirm) %>
+                    {render_slot(confirm)}
                   </div>
                   
                   <div :for={cancel <- @cancel} phx-click={hide_modal(@on_cancel, @id)}>
-                    <%= render_slot(cancel) %>
+                    {render_slot(cancel)}
                   </div>
                 </div>
               </div>
@@ -147,14 +147,14 @@ defmodule LandbuyerWeb.CoreComponents do
       {@rest}
     >
       <p>
-        <%= msg %>
+        {msg}
       </p>
       
       <button
         type="button"
         class={[
           "absolute cursor-pointer top-0 right-0 w-3 h-3",
-          @kind == :neutral && "bg-gray-400",
+          @kind == :neutral && "bg-slate-700",
           @kind == :error && "bg-red",
           @kind == :info && "bg-green"
         ]}
@@ -186,23 +186,25 @@ defmodule LandbuyerWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 flex gap-3 border text-left transition-all",
-        "disabled:opacity-50",
+        "phx-submit-loading:opacity-75 flex gap-3 rounded text-left transition-all",
         theme(@theme),
         only_icon(@only_icon),
         @class
       ]}
       {@rest}
     >
-      <%= render_slot(@inner_block) %>
+      {render_slot(@inner_block)}
     </button>
     """
   end
 
-  defp theme(:primary), do: "bg-gray-800 disabled:hover:bg-gray-800 hover:bg-gray-900 border-green text-green"
-  defp theme(:secondary), do: "bg-gray-800 disabled:hover:bg-gray-800 hover:bg-gray-900 border-gray-500 text-gray-50"
-  defp theme(:error), do: "bg-gray-800 disabled:hover:bg-gray-800 hover:bg-gray-900 border-red text-red"
-  defp theme(:ghost), do: "text-gray-50 disabled:hover:text-gray-50 hover:text-white border-transparent"
+  defp theme(:primary), do: "bg-slate-800 disabled:hover:bg-slate-800 hover:bg-slate-900 border-green text-green"
+
+  defp theme(:secondary),
+    do: "bg-slate-800 disabled:hover:bg-slate-800 hover:bg-slate-900 border-slate-500 text-slate-50"
+
+  defp theme(:error), do: "bg-slate-800 disabled:hover:bg-slate-800 hover:bg-slate-900 border-red text-red"
+  defp theme(:ghost), do: "text-slate-50 disabled:hover:text-slate-50 hover:text-white border-transparent"
 
   defp only_icon(false), do: "text-sm py-3 px-4"
   defp only_icon(true), do: "text-xl"
@@ -267,7 +269,7 @@ defmodule LandbuyerWeb.CoreComponents do
         checked={@checked}
         class="rounded border-slate-300 focus:border-blue-300"
         {@rest}
-      /> <%= @label %>
+      /> {@label}
     </label>
     """
   end
@@ -275,22 +277,22 @@ defmodule LandbuyerWeb.CoreComponents do
   def input(%{type: "select"} = assigns) do
     ~H"""
     <div phx-feedback-for={@name}>
-      <.label for={@id}><%= @label %></.label>
+      <.label for={@id}>{@label}</.label>
       
       <select
         id={@id}
         name={@name}
         class={[
-          "mt-0.5 block w-full border-2 p-2 placeholder:text-gray-50",
-          "text-sm text-gray-900 bg-white focus:outline-none focus:ring-1",
-          "phx-no-feedback:border-gray-100 phx-no-feedback:focus:border-gray-100",
+          "mt-0.5 block w-full border-2 p-1 placeholder:text-gray-500",
+          "text-sm text-gray-900 bg-slate-300 focus:outline-none focus:ring-2",
+          "phx-no-feedback:border-gray-800 phx-no-feedback:focus:border-gray-300",
           input_border(@errors)
         ]}
         multiple={@multiple}
         {@rest}
       >
-        <option :if={@prompt}><%= @prompt %></option>
-         <%= Phoenix.HTML.Form.options_for_select(@options, @value) %>
+        <option :if={@prompt}>{@prompt}</option>
+         {Phoenix.HTML.Form.options_for_select(@options, @value)}
       </select>
        <.error errors={@errors} />
     </div>
@@ -300,7 +302,7 @@ defmodule LandbuyerWeb.CoreComponents do
   def input(%{type: "textarea"} = assigns) do
     ~H"""
     <div phx-feedback-for={@name}>
-      <.label for={@id}><%= @label %></.label>
+      <.label for={@id}>{@label}</.label>
        <textarea
         id={@id || @name}
         name={@name}
@@ -320,7 +322,7 @@ defmodule LandbuyerWeb.CoreComponents do
   def input(assigns) do
     ~H"""
     <div phx-feedback-for={@name}>
-      <.label for={@id}><%= @label %></.label>
+      <.label for={@id}>{@label}</.label>
       
       <input
         type={@type}
@@ -351,7 +353,7 @@ defmodule LandbuyerWeb.CoreComponents do
   def label(assigns) do
     ~H"""
     <label for={@for} class="block text-base">
-      <%= render_slot(@inner_block) %>
+      {render_slot(@inner_block)}
     </label>
     """
   end
@@ -365,7 +367,7 @@ defmodule LandbuyerWeb.CoreComponents do
     ~H"""
     <div class="flex flex-col gap-1 mt-0.5 text-xs min-h-[15px] text-red">
       <p :for={msg <- @errors}>
-        <%= String.capitalize(msg) %>
+        {String.capitalize(msg)}
       </p>
     </div>
     """
@@ -423,21 +425,30 @@ defmodule LandbuyerWeb.CoreComponents do
   attr(:class, :string, default: "")
 
   def icon_button(assigns) do
-    # 1) on calcule la chaîne de classes
+    # Récupère la classe passée (ou "")
+    user_class = assigns[:class] || ""
+
+    # Si l'utilisateur a passé un "bg-…" on n'applique PAS le bg par défaut
+    default_bg =
+      if String.match?(user_class, ~r/(^|\s)bg-/), do: "", else: "bg-slate-800 hover:bg-slate-600"
+
     classes =
       [
-        "grid place-content-center w-8 h-8 bg-slate-800 hover:bg-slate-600 rounded",
-        assigns.class
+        # squelette commun
+        "grid place-content-center w-8 h-8 rounded",
+        # bg par défaut (ou vide)
+        default_bg,
+        # classes de l'appelant
+        user_class
       ]
-      |> Enum.filter(&(&1 not in [nil, ""]))
+      # on vire les chaînes vides
+      |> Enum.filter(&(&1 != ""))
       |> Enum.join(" ")
 
-    # 2) on la met dans les assigns
-    assigns = assign(assigns, :classes, classes)
+    assigns = assign(assigns, :class, classes)
 
-    # 3) on l’utilise dans le ~H
     ~H"""
-    <button type={@type} phx-click={@click} aria-label={@label} class={@classes}>
+    <button type="button" class={@class} aria-label={@label} phx-click={@click}>
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path d={@d} stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
       </svg>

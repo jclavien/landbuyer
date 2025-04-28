@@ -51,19 +51,19 @@ defmodule LandbuyerWeb.Live.Dashboard do
       <.layout_header />
       <div class="flex h-[calc(100%-7rem)] overflow-hidden">
         <!-- Colonne de gauche (comptes) -->
-        <div class="w-96 pl-2 pr-3 py-4 ml-4 bg-slate-700 border-slate-700 text-slate-100 overflow-y-auto">
+        <div class="w-80 pl-2 pr-3 py-4 ml-4 bg-slate-700 border-slate-700 text-slate-100 overflow-y-auto rounded">
           <.accounts_list :if={not @show_form_account} accounts={@accounts} active_account={@active_account} />
           <.accounts_create :if={@show_form_account} changeset={@account_changeset} />
         </div>
         <!-- ── CENTRE : graphique + contenu existant ── -->
-        <div class="flex-1 flex flex-col pl-8 pr-4 py-6 bg-slate-800 rounded-xl text-slate-100 overflow-y-auto">
+        <div class="flex-1 flex flex-col pl-8 pr-4 py-6 bg-slate-800 rounded text-slate-100 overflow-y-auto">
           <!-- Le reste du contenu central (traders, formulaires, events) -->
           <div :if={@active_account} class="space-y-4">
             <.traders_list account={@active_account} />
             <div class="flex justify-start">
               <.icon_button
                 click="toggle_form_trader"
-                label="Add trader"
+                label="Add strategy"
                 d="M12 4.5v15m7.5-7.5h-15"
                 class="bg-slate-700 hover:bg-slate-600"
               />
@@ -78,8 +78,8 @@ defmodule LandbuyerWeb.Live.Dashboard do
           </div>
           <!-- Tes panels de formulaires et d'événements ici -->
           <div class={[
-            "fixed top-14 bottom-14 w-96 transition-all",
-            "border-l bg-gray-50 border-gray-50 shadow-xl",
+            "fixed top-14 bottom-14 w-80 transition-all",
+            "border-l bg-slate-700 border-slate-700 shadow-xl rounded",
             @show_form_trader && "right-0",
             not @show_form_trader && "-right-96"
           ]}>
@@ -330,27 +330,31 @@ defmodule LandbuyerWeb.Live.Dashboard do
   end
 
   defp set_active_account(socket, account_id) do
-    # on récupère l'account existant
-    account =
-      Enum.find(socket.assigns.accounts, &(&1.id == account_id))
+    # on cherche l’account correspondant
+    case Enum.find(socket.assigns.accounts, &(&1.id == account_id)) do
+      nil ->
+        # pas de compte → on désactive l’active_account sans planter
+        assign(socket, active_account: nil)
 
-    # on charge tous les snapshots depuis le début
-    points =
-      account.id
-      |> Landbuyer.AccountSnapshots.NavReader.list_nav_points(limit: :infinity)
-      |> Enum.map(fn s ->
-        dt = DateTime.from_naive!(s.inserted_at, "Etc/UTC")
+      account ->
+        # on charge tous les snapshots depuis le début
+        points =
+          account.id
+          |> Landbuyer.AccountSnapshots.NavReader.list_nav_points(limit: :infinity)
+          |> Enum.map(fn s ->
+            dt = DateTime.from_naive!(s.inserted_at, "Etc/UTC")
 
-        %{
-          inserted_at: DateTime.to_iso8601(dt),
-          nav: Decimal.to_float(s.nav)
-        }
-      end)
+            %{
+              inserted_at: DateTime.to_iso8601(dt),
+              nav: Decimal.to_float(s.nav)
+            }
+          end)
 
-    # on injecte la liste sous la clé :nav_points
-    account = Map.put(account, :nav_points, points)
+        # on injecte la liste sous la clé :nav_points
+        account = Map.put(account, :nav_points, points)
 
-    assign(socket, active_account: account)
+        assign(socket, active_account: account)
+    end
   end
 
   defp default_account_changeset do
